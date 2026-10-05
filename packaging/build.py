@@ -73,7 +73,13 @@ def build(onefile: bool) -> Path:
         env=env,
     )
     name = "AlchimistWorld.exe" if sys.platform == "win32" else "AlchimistWorld"
-    return dist / name if onefile else dist / "AlchimistWorld"
+    if onefile:
+        return dist / name
+    # На macOS spec собирает ещё и AlchimistWorld.app — отдавать надо его:
+    # голую папку с исполняемым файлом Finder как приложение не запустит.
+    if sys.platform == "darwin":
+        return dist / "AlchimistWorld.app"
+    return dist / "AlchimistWorld"
 
 
 def archive(target: Path, tag: str) -> Path:
