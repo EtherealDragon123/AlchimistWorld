@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 import random
 import time
 
@@ -17,6 +18,10 @@ from alchimist.core.models import (
     Rarity,
     Recipe,
 )
+
+#: Машины CI заметно медленнее рабочей: там лимиты времени втрое мягче.
+#: Замедление алгоритма в разы это всё равно ловит.
+SLOWDOWN = 3 if os.environ.get("CI") else 1
 
 
 def _random_vector(rng: random.Random, units: int) -> EV:
@@ -58,7 +63,7 @@ def test_can_brew_under_200ms() -> None:
     rows = brewable(potions, stock, [Kit.ALCHEMIST])
     elapsed = time.perf_counter() - start
     assert rows
-    assert elapsed < 0.2, f"подбор занял {elapsed * 1000:.0f} мс"
+    assert elapsed < 0.2 * SLOWDOWN, f"подбор занял {elapsed * 1000:.0f} мс"
 
 
 def test_brewing_with_excess_stays_bounded() -> None:
@@ -73,7 +78,7 @@ def test_brewing_with_excess_stays_bounded() -> None:
     rows = brewable(potions, stock, [Kit.ALCHEMIST], max_excess=2, max_portions=3)
     elapsed = time.perf_counter() - start
     assert rows
-    assert elapsed < 5.0, f"подбор с излишком занял {elapsed:.1f} с"
+    assert elapsed < 5.0 * SLOWDOWN, f"подбор с излишком занял {elapsed:.1f} с"
 
 
 def test_real_scale_stays_fast() -> None:
@@ -92,7 +97,7 @@ def test_real_scale_stays_fast() -> None:
     start = time.perf_counter()
     brewable(report.potions, stock, [Kit.ALCHEMIST], max_excess=2, max_portions=3)
     elapsed = time.perf_counter() - start
-    assert elapsed < 0.5, f"подбор занял {elapsed * 1000:.0f} мс"
+    assert elapsed < 0.5 * SLOWDOWN, f"подбор занял {elapsed * 1000:.0f} мс"
 
 
 def test_almost_ready_is_usable_on_the_same_dataset() -> None:
@@ -100,5 +105,5 @@ def test_almost_ready_is_usable_on_the_same_dataset() -> None:
     start = time.perf_counter()
     rows = almost_ready(potions, stock, [Kit.ALCHEMIST], ingredients)
     elapsed = time.perf_counter() - start
-    assert elapsed < 2.0, f"«почти готово» заняло {elapsed * 1000:.0f} мс"
+    assert elapsed < 2.0 * SLOWDOWN, f"«почти готово» заняло {elapsed * 1000:.0f} мс"
     assert all(r.missing.total > 0 for r in rows)

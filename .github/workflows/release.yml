@@ -11,6 +11,11 @@ on:
 permissions:
   contents: write
 
+# На Windows Python по умолчанию пишет в консоль в cp1252, где нет кириллицы,
+# и падает на первом же русском выводе (build.py).
+env:
+  PYTHONUTF8: "1"
+
 jobs:
   build:
     name: ${{ matrix.os }}
@@ -21,9 +26,9 @@ jobs:
         os: [ubuntu-latest, windows-latest, macos-latest]
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v7
         with:
           python-version: "3.12"
 
@@ -38,7 +43,7 @@ jobs:
       - name: Собрать
         run: python packaging/build.py --clean --onefile
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: AlchimistWorld-${{ matrix.os }}
           path: |
@@ -53,10 +58,10 @@ jobs:
     # Черновик релиза создаётся только по тегу: ручной запуск просто собирает файлы.
     if: startsWith(github.ref, 'refs/tags/v')
     steps:
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v8
         with:
           path: artifacts
-      - uses: softprops/action-gh-release@v2
+      - uses: softprops/action-gh-release@v3
         with:
           files: artifacts/**/*
           generate_release_notes: true
