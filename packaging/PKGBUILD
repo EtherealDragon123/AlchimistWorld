@@ -1,0 +1,65 @@
+# Maintainer: AlchimistWorld
+#
+# Сборка и установка в систему на Arch и производных (CachyOS, Manjaro, EndeavourOS):
+#
+#     cd packaging && makepkg -si
+#
+# Ставит пакет через pacman: удаляется `pacman -R alchimist-world`, в меню
+# появляется значок, Qt берётся системный, поэтому пакет весит килобайты, а не
+# сотни мегабайт, как самодостаточная сборка PyInstaller.
+
+pkgname=alchimist-world
+# Версия читается из единственного места — src/alchimist/__init__.py, как и в
+# pyproject.toml. Прибитая сюда цифра уже однажды разъехалась с приложением.
+pkgver=$(sed -n 's/^__version__ = "\(.*\)"/\1/p' "$(dirname "$BASH_SOURCE")/../src/alchimist/__init__.py")
+pkgrel=1
+pkgdesc="Помощник по homebrew-алхимии для D&D: реагенты, зелья, подбор рецептов"
+arch=('any')
+url="https://github.com/EtherealDragon123/AlchimistWorld"
+license=('MIT')
+# Код кладётся в /usr/lib/pythonX.Y/site-packages, то есть пакет привязан к той
+# версии Python, которой собран. Зависимость это фиксирует: на системе с другой
+# версией pacman откажется ставить, а не поставит молча нерабочее. После того как
+# в репозиториях поднимут Python, пакет нужно пересобрать — как и любой питонячий.
+_pyver=$(/usr/bin/python -c 'import sys; print("%d.%d" % sys.version_info[:2])')
+_pynext=$(/usr/bin/python -c 'import sys; print("%d.%d" % (sys.version_info[0], sys.version_info[1] + 1))')
+
+depends=(
+  "python>=$_pyver"
+  "python<$_pynext"
+  'pyside6'
+  'python-platformdirs'
+  'python-tomli-w'
+)
+makedepends=('python-build' 'python-installer' 'python-wheel' 'python-hatchling'
+             'python-babel')  # babel собирает .mo, в работе не нужен
+options=('!debug')
+
+# Собирается из рабочего дерева рядом, а не из тега: репозитория пока нет.
+# $startdir — папка с этим PKGBUILD, то есть packaging/.
+_projectdir="$startdir/.."
+
+# Везде именно /usr/bin/python: если в PATH окажется venv проекта, пакет соберётся
+# по путям этого venv и в него попадёт чужое содержимое.
+build() {
+  cd "$_projectdir"
+  # Каталоги перевода — часть пакета (03 §8).
+  /usr/bin/python tools/i18n.py compile
+  /usr/bin/python -m build --wheel --no-isolation --outdir "$srcdir/dist"
+}
+
+package() {
+  /usr/bin/python -m installer --destdir="$pkgdir" "$srcdir/dist"/*.whl
+
+  cd "$_projectdir"
+  install -Dm644 packaging/alchimist.desktop \
+    "$pkgdir/usr/share/applications/alchimist-world.desktop"
+  install -Dm644 packaging/icon.png \
+    "$pkgdir/usr/share/icons/hicolor/256x256/apps/alchimist.png"
+  install -Dm644 packaging/icon.svg \
+    "$pkgdir/usr/share/icons/hicolor/scalable/apps/alchimist.svg"
+  install -Dm644 README.md "$pkgdir/usr/share/doc/$pkgname/README.md"
+  for doc in docs/*.md; do
+    install -Dm644 "$doc" "$pkgdir/usr/share/doc/$pkgname/$(basename "$doc")"
+  done
+}

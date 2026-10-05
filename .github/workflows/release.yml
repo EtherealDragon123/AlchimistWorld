@@ -1,0 +1,63 @@
+name: Release
+
+# Сборки под три ОС по тегу: PyInstaller не умеет собирать под чужую систему,
+# поэтому каждая версия собирается на своём runner'е (03 §10).
+on:
+  push:
+    tags: ["v*"]
+  # Можно запустить руками из вкладки Actions, не ставя тег.
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Установить зависимости
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e ".[dev]" pyinstaller
+
+      - name: Тесты перед сборкой
+        run: python -m pytest tests --ignore=tests/ui_qt -q
+
+      - name: Собрать
+        run: python packaging/build.py --clean --onefile
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: AlchimistWorld-${{ matrix.os }}
+          path: |
+            dist/*.zip
+            dist/*.tar.gz
+            dist/*одним-файлом*
+          if-no-files-found: error
+
+  publish:
+    needs: build
+    runs-on: ubuntu-latest
+    # Черновик релиза создаётся только по тегу: ручной запуск просто собирает файлы.
+    if: startsWith(github.ref, 'refs/tags/v')
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+      - uses: softprops/action-gh-release@v2
+        with:
+          files: artifacts/**/*
+          generate_release_notes: true
+          draft: true

@@ -1,0 +1,118 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "alchimist"
+# Версия живёт в одном месте — src/alchimist/__init__.py. Продублированная здесь,
+# она молча расходилась: пакет собирался старой, хотя приложение сообщало новую.
+dynamic = ["version"]
+description = "AlchimistWorld — настольный помощник по homebrew-алхимии для D&D"
+readme = "README.md"
+requires-python = ">=3.12"
+license = { text = "MIT" }
+authors = [{ name = "AlchimistWorld" }]
+dependencies = [
+  "PySide6>=6.6",
+  "platformdirs>=4.0",
+  "tomli-w>=1.0",
+  "babel>=2.14",
+]
+
+[project.optional-dependencies]
+dev = [
+  "pytest>=8.0",
+  "ruff>=0.5",
+  "import-linter>=2.0",
+]
+
+[project.scripts]
+alchimist = "alchimist.cli.__main__:main"
+
+[project.gui-scripts]
+alchimist-gui = "alchimist.ui_qt.app:main"
+
+[tool.hatch.version]
+path = "src/alchimist/__init__.py"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/alchimist"]
+# Скомпилированные каталоги перевода лежат в .gitignore, но в пакет попасть должны.
+artifacts = ["src/alchimist/i18n/locale/**/*.mo"]
+
+[tool.hatch.build.targets.sdist]
+include = ["src", "tests", "docs", "tools", "babel.cfg", "packaging", "README.md"]
+artifacts = ["src/alchimist/i18n/locale/**/*.mo"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
+filterwarnings = ["error"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "UP", "B", "C4", "SIM", "RUF"]
+ignore = ["RUF001", "RUF002", "RUF003"]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["E501"]
+
+[tool.ruff.format]
+quote-style = "double"
+
+# ── Контроль слоёв (NFR-1, 03 §2) ────────────────────────────────────────────
+[tool.importlinter]
+root_package = "alchimist"
+include_external_packages = true
+
+[[tool.importlinter.contracts]]
+name = "Слои приложения: ui/cli → services → storage/importers → core"
+type = "layers"
+layers = [
+  "alchimist.ui_qt : alchimist.cli",
+  "alchimist.services",
+  "alchimist.storage : alchimist.importers",
+  "alchimist.core",
+]
+
+[[tool.importlinter.contracts]]
+name = "core не зависит ни от чего, кроме стандартной библиотеки"
+type = "forbidden"
+source_modules = ["alchimist.core"]
+forbidden_modules = [
+  "PySide6",
+  "shiboken6",
+  "platformdirs",
+  "tomli_w",
+  "babel",
+  "alchimist.storage",
+  "alchimist.importers",
+  "alchimist.services",
+  "alchimist.ui_qt",
+  "alchimist.cli",
+  "alchimist.i18n",
+]
+
+[[tool.importlinter.contracts]]
+name = "Qt живёт только в ui_qt"
+type = "forbidden"
+source_modules = [
+  "alchimist.core",
+  "alchimist.storage",
+  "alchimist.importers",
+  "alchimist.services",
+  "alchimist.i18n",
+  "alchimist.cli",
+]
+forbidden_modules = ["PySide6", "shiboken6"]
+
+[[tool.importlinter.contracts]]
+name = "Интерфейс не лезет в хранилище напрямую"
+type = "forbidden"
+source_modules = ["alchimist.ui_qt"]
+forbidden_modules = ["alchimist.storage", "alchimist.importers"]
+allow_indirect_imports = true

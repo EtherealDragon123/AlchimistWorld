@@ -1,0 +1,31 @@
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+build/
+dist/
+.pytest_cache/
+.ruff_cache/
+.import_linter_cache/
+*.bak
+*.tmp
+.coverage
+htmlcov/
+*.mo
+
+# makepkg
+packaging/pkg/
+packaging/src/
+packaging/*.pkg.tar.*
+
+# Claude Code: локальные права и рабочие деревья (settings.json и CLAUDE.md коммитить можно)
+.claude/settings.local.json
+.claude/worktrees/
+
+# Obsidian, если открыть Алхимия/ как хранилище
+.obsidian/
+
+# Мусор ОС: часть игроков на Windows и macOS
+.DS_Store
+Thumbs.db

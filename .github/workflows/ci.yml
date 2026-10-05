@@ -1,0 +1,47 @@
+name: CI
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+
+jobs:
+  check:
+    name: ${{ matrix.os }} · Python ${{ matrix.python }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        python: ["3.12", "3.13"]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+
+      - name: Установить зависимости
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e ".[dev]"
+
+      - name: Линтер и формат
+        run: |
+          ruff check src tests
+          ruff format --check src tests
+
+      - name: Контроль слоёв (NFR-1)
+        run: lint-imports --config pyproject.toml
+
+      - name: Собрать каталоги перевода
+        run: python tools/i18n.py compile
+
+      - name: Тесты ядра без GUI (NFR-7)
+        run: python -m pytest tests --ignore=tests/ui_qt -q
+
+      - name: Тесты интерфейса
+        env:
+          QT_QPA_PLATFORM: offscreen
+        run: python -m pytest tests/ui_qt -q

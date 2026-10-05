@@ -1,0 +1,13 @@
+[Desktop Entry]
+Type=Application
+Name=AlchimistWorld
+GenericName=Помощник по алхимии
+GenericName[en]=Alchemy helper
+Comment=Учёт реагентов и зелий для homebrew-алхимии в D&D
+Comment[en]=Reagent and potion tracker for homebrew D&D alchemy
+Exec=alchimist-gui
+Icon=alchimist
+Terminal=false
+Categories=Game;RolePlaying;
+Keywords=dnd;alchemy;potion;алхимия;зелья;
+StartupWMClass=AlchimistWorld
