@@ -271,7 +271,11 @@ class CanBrewPage(Page):
         self.tree.clear()
         self.tree.setColumnWidth(5, self._actions_width())
         self.empty.setVisible(not rows)
-        self.tree.setVisible(bool(rows))
+        # Заполняется скрытым: у видимого дерева каждая вставленная строка заново
+        # раскладывает все уже стоящие в нём кнопки, и 200 вариантов рисовались
+        # полторы секунды вместо десятой. Скрытие снимает фокус — вернём его.
+        had_focus = self.tree.hasFocus()
+        self.tree.setVisible(False)
         for row in rows:
             easiest = row.easiest
             parent = QTreeWidgetItem(
@@ -323,6 +327,9 @@ class CanBrewPage(Page):
                 parent.addChild(child)
                 self.tree.setItemWidget(child, 5, self._build_actions(option))
             parent.setExpanded(True)
+        self.tree.setVisible(bool(rows))
+        if had_focus and rows:
+            self.tree.setFocus()
 
     # ── кнопки строки ─────────────────────────────────────────────────────
     def _build_actions(self, option: BrewOption | None) -> QWidget:
