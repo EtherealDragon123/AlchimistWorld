@@ -81,7 +81,7 @@ VERSION=$("$PY" -c "import re,pathlib;print(re.search(r'__version__ = \"(.*)\"',
 mkdir -p dist
 (cd "$WORK/dist" && zip -qr "$PROJECT/dist/AlchimistWorld-$VERSION-windows.zip" AlchimistWorld)
 cp "$WORK/dist-onefile/AlchimistWorld.exe" \
-   "dist/AlchimistWorld-$VERSION-windows-одним-файлом.exe"
+   "dist/AlchimistWorld-$VERSION-windows.exe"
 
 echo
 echo "Готово:"

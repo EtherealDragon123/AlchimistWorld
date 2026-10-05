@@ -54,10 +54,8 @@ jobs:
       - uses: actions/upload-artifact@v7
         with:
           name: AlchimistWorld-${{ matrix.os }}
-          path: |
-            dist/*.zip
-            dist/*.tar.gz
-            dist/*одним-файлом*
+          # Архив и вариант одним файлом; папка сборки (dist/AlchimistWorld/) не подходит.
+          path: dist/AlchimistWorld-*
           if-no-files-found: error
 
   publish:

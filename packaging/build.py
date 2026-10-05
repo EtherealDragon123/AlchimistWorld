@@ -80,7 +80,8 @@ def archive(target: Path, tag: str) -> Path:
     """Zip под Windows, tar.gz на остальных: так привычнее на каждой стороне."""
     base = DIST / f"AlchimistWorld-{version()}-{tag}"
     if sys.platform == "win32":
-        result = base.with_suffix(".zip")
+        # Не with_suffix: тот принял бы «.0-windows» за расширение и отрезал его.
+        result = Path(f"{base}.zip")
         with zipfile.ZipFile(result, "w", zipfile.ZIP_DEFLATED) as zf:
             for file in sorted(target.rglob("*")):
                 if file.is_file():
@@ -118,7 +119,7 @@ def main() -> int:
     if args.onefile:
         single = build(onefile=True)
         suffix = ".exe" if sys.platform == "win32" else ""
-        final = DIST / f"AlchimistWorld-{version()}-{tag}-одним-файлом{suffix}"
+        final = DIST / f"AlchimistWorld-{version()}-{tag}{suffix}"
         final.unlink(missing_ok=True)
         shutil.move(str(single), final)
         shutil.rmtree(DIST / "onefile", ignore_errors=True)
