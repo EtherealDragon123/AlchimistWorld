@@ -46,6 +46,14 @@ jobs:
       - name: Тесты ядра без GUI (NFR-7)
         run: python -m pytest tests --ignore=tests/ui_qt -q
 
+      # PySide6 из pip не несёт системных графических библиотек, а на серверной
+      # Ubuntu их нет: без libEGL Qt не загружается даже в режиме offscreen.
+      - name: Системные библиотеки для Qt (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends libegl1 libgl1 libxkbcommon0
+
       - name: Тесты интерфейса
         env:
           QT_QPA_PLATFORM: offscreen

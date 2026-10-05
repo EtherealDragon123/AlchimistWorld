@@ -40,6 +40,14 @@ jobs:
       - name: Тесты перед сборкой
         run: python -m pytest tests --ignore=tests/ui_qt -q
 
+      # PySide6 из pip не несёт системных графических библиотек, а на серверной
+      # Ubuntu их нет: PyInstaller загружает модули Qt и без libEGL падает.
+      - name: Системные библиотеки для Qt (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends libegl1 libgl1 libxkbcommon0
+
       - name: Собрать
         run: python packaging/build.py --clean --onefile
 
