@@ -15,7 +15,7 @@ pkgver=$(sed -n 's/^__version__ = "\(.*\)"/\1/p' "$(dirname "$BASH_SOURCE")/../s
 pkgrel=1
 pkgdesc="Помощник по homebrew-алхимии для D&D: реагенты, зелья, подбор рецептов"
 arch=('any')
-url="https://github.com/EtherealDragon123/AlchimistWorld"
+url="https://github.com/HiLute/AlchimistWorld"
 license=('MIT')
 # Код кладётся в /usr/lib/pythonX.Y/site-packages, то есть пакет привязан к той
 # версии Python, которой собран. Зависимость это фиксирует: на системе с другой
