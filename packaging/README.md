@@ -30,6 +30,10 @@ cd packaging && makepkg -si
 cd packaging && makepkg -f        # соберёт alchimist-world-<версия>-1-any.pkg.tar.zst
 ```
 
+Если makepkg пожалуется на недостающие зависимости для сборки (`python-build`,
+`python-installer`, `python-hatchling`, `python-babel`), добавьте флаг `-s` — он доставит
+их через pacman, а `-sr` ещё и уберёт после сборки: `makepkg -sf` или `makepkg -srf`.
+
 Получатель ставит одной командой, ничего не собирая:
 
 ```bash

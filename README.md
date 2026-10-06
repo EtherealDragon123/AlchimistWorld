@@ -140,6 +140,10 @@ cd packaging && makepkg -si
 cd packaging && makepkg -f
 ```
 
+Если makepkg пожалуется на недостающие зависимости для сборки (`python-build`, `python-hatchling`
+и т. п.), добавьте флаг `-s` — он доставит их через pacman, а `-sr` ещё и уберёт после сборки:
+`makepkg -sf` или `makepkg -srf`.
+
 **Отдать кому угодно** — самодостаточная сборка, у получателя ничего ставить не надо:
 
 ```bash
