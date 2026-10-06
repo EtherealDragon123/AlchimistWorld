@@ -45,6 +45,9 @@ build() {
   cd "$_projectdir"
   # Каталоги перевода — часть пакета (03 §8).
   /usr/bin/python tools/i18n.py compile
+  # makepkg не чистит $srcdir между сборками: без этого рядом остаётся wheel
+  # прошлой версии, package() ставит оба, и второй падает на /usr/bin/alchimist.
+  rm -rf "$srcdir/dist"
   /usr/bin/python -m build --wheel --no-isolation --outdir "$srcdir/dist"
 }
 
