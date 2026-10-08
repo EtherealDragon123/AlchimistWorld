@@ -106,21 +106,6 @@ def test_unknown_choice_falls_back_to_the_default(
     assert app.catalog.potion("barmaglot").recipe is None
 
 
-def test_same_notes_give_same_ids(tmp_path, catalog) -> None:
-    """03 §6.9: два игрока импортировали одни заметки — id совпадают."""
-    from pathlib import Path
-
-    from alchimist.importers.obsidian import import_obsidian
-
-    source = Path(__file__).resolve().parents[2] / "Алхимия"
-    if not source.exists():
-        pytest.skip("нет исходных заметок")
-    first = import_obsidian(source)
-    second = import_obsidian(source)
-    assert [i.id for i in first.ingredients] == [i.id for i in second.ingredients]
-    assert [p.id for p in first.potions] == [p.id for p in second.potions]
-
-
 def test_inventory_and_journal_are_not_shared(app: AppService, other: AppService, tmp_path) -> None:
     """FR-10.4."""
     other.inventory.set_reagent("fanana", 7)

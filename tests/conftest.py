@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from pathlib import Path
+
 import pytest
 
 from alchimist.core.elements import ElementVector as EV
@@ -164,3 +166,13 @@ def potions() -> dict[str, Potion]:
 @pytest.fixture
 def catalog(ingredients: dict[str, Ingredient], potions: dict[str, Potion]) -> Catalog:
     return Catalog(list(ingredients.values()), list(potions.values()))
+
+
+@pytest.fixture(scope="session")
+def campaign_file() -> Path:
+    """Справочник настоящей кампании, выгруженный из приложения (FR-10.2).
+
+    На нём сценарии, консоль и замеры скорости идут на живых данных: 63 реагента,
+    139 зелий, 25 известных рецептов. Загружается так же, как у игроков, — обменом.
+    """
+    return Path(__file__).resolve().parent / "alchimist-catalog.json"

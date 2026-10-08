@@ -8,8 +8,6 @@ import pytest
 
 from alchimist.cli.__main__ import main
 
-SOURCE = Path(__file__).resolve().parents[1] / "Алхимия"
-
 
 @pytest.fixture
 def data_dir(tmp_path, monkeypatch) -> Path:
@@ -21,29 +19,8 @@ def run(*args: str) -> int:
     return main(list(args))
 
 
-@pytest.mark.skipif(not SOURCE.exists(), reason="нет исходных заметок")
-def test_import_dry_run_writes_nothing(data_dir, capsys) -> None:
-    assert run("import-obsidian", str(SOURCE), "--dry-run") == 0
-    out = capsys.readouterr().out
-    assert "Реагентов: 63" in out
-    assert "известных рецептов: 25" in out
-    assert not (data_dir / "catalog" / "ingredients.json").exists()
-
-
-@pytest.mark.skipif(not SOURCE.exists(), reason="нет исходных заметок")
-def test_import_writes_catalog_and_report(data_dir, capsys) -> None:
-    assert run("import-obsidian", str(SOURCE)) == 0
-    assert (data_dir / "catalog" / "ingredients.json").exists()
-    assert (data_dir / "catalog" / "potions.json").exists()
-    report = (data_dir / "catalog" / "import-report.md").read_text(encoding="utf-8")
-    assert "# Отчёт об импорте" in report
-    assert "Масло Облачной Платформы" in report
-    assert "| Алхимический Огонь | Жидкая, Вязкая, Взрывная | Огонь×2 |" in report
-
-
-@pytest.mark.skipif(not SOURCE.exists(), reason="нет исходных заметок")
-def test_full_console_workflow(data_dir, capsys) -> None:
-    run("import-obsidian", str(SOURCE))
+def test_full_console_workflow(data_dir, capsys, campaign_file) -> None:
+    run("import-catalog", str(campaign_file))
     capsys.readouterr()
 
     assert run("inv", "add", "Щёлкорех", "3") == 0
@@ -74,9 +51,8 @@ def test_settings_roundtrip(data_dir, capsys) -> None:
     assert "Инструменты отравителя" in capsys.readouterr().out
 
 
-@pytest.mark.skipif(not SOURCE.exists(), reason="нет исходных заметок")
-def test_export_and_import_catalog(data_dir, tmp_path, capsys) -> None:
-    run("import-obsidian", str(SOURCE))
+def test_export_and_import_catalog(data_dir, tmp_path, capsys, campaign_file) -> None:
+    run("import-catalog", str(campaign_file))
     capsys.readouterr()
 
     target = tmp_path / "catalog.json"
@@ -101,13 +77,12 @@ def test_elements_command(data_dir, capsys) -> None:
     assert "air    Воздух" in out
 
 
-@pytest.mark.skipif(not SOURCE.exists(), reason="нет исходных заметок")
-def test_can_brew_shows_every_allowed_base(data_dir, capsys) -> None:
+def test_can_brew_shows_every_allowed_base(data_dir, capsys, campaign_file) -> None:
     """Вариант может годиться на нескольких основах — показывать одну нечестно.
 
     «Алхимический Огонь» варится на любой основе, а вывод показывал «Жидкая».
     """
-    run("import-obsidian", str(SOURCE))
+    run("import-catalog", str(campaign_file))
     run("inv", "add", "Щёлкорех", "6")
     capsys.readouterr()
 
@@ -119,12 +94,11 @@ def test_can_brew_shows_every_allowed_base(data_dir, capsys) -> None:
     assert "порц." in out and "Сл " in out
 
 
-@pytest.mark.skipif(not SOURCE.exists(), reason="нет исходных заметок")
-def test_journal_prints_distillation(data_dir, capsys) -> None:
+def test_journal_prints_distillation(data_dir, capsys, campaign_file) -> None:
     """Разбор на эссенции — не «зелье ×1», а своя строка (П-9)."""
     from alchimist.services import build_app
 
-    run("import-obsidian", str(SOURCE))
+    run("import-catalog", str(campaign_file))
     capsys.readouterr()
 
     app = build_app(data_dir)

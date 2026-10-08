@@ -98,10 +98,6 @@ class Paths:
     def settings_file(self) -> Path:
         return self.config / "settings.toml"
 
-    @property
-    def import_report_file(self) -> Path:
-        return self.catalog_dir / "import-report.md"
-
     def for_profile(self, profile: str) -> Paths:
         return Paths(self.root, self.config, profile)
 

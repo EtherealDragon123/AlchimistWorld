@@ -1,4 +1,4 @@
-"""`python -m alchimist …` — консольный интерфейс (03 §7, этап 2)."""
+"""`python -m alchimist …` — консольный интерфейс (этап 2)."""
 
 from __future__ import annotations
 
@@ -21,7 +21,6 @@ from alchimist.core.models import (
 from alchimist.i18n import _, describe, set_language
 from alchimist.services import build_app
 from alchimist.services.app import AppService
-from alchimist.services.importing import render_report, run_import
 
 
 def _app(args: argparse.Namespace) -> AppService:
@@ -32,35 +31,6 @@ def _print_messages(messages, prefix: str = "") -> None:
     marks = {Severity.INFO: "·", Severity.WARNING: "!", Severity.ERROR: "×"}
     for message in messages:
         print(f"{prefix}{marks[message.severity]} {describe(message)}")
-
-
-# ── import-obsidian ───────────────────────────────────────────────────────────
-def cmd_import_obsidian(args: argparse.Namespace) -> int:
-    source = Path(args.source).expanduser()
-    if not source.exists():
-        print(f"Папка не найдена: {source}", file=sys.stderr)
-        return 2
-    app = None if args.dry_run else _app(args)
-    result = run_import(source, app.catalog if app else None, dry_run=args.dry_run)
-
-    print(f"Реагентов: {len(result.report.ingredients)}")
-    print(
-        f"Зелий: {len(result.report.potions)} (известных рецептов: {result.report.known_recipes})"
-    )
-    _print_messages(result.messages, prefix="  ")
-
-    report_text = render_report(result, source)
-    if app is not None:
-        app.paths.import_report_file.parent.mkdir(parents=True, exist_ok=True)
-        app.paths.import_report_file.write_text(report_text, encoding="utf-8")
-        print(f"\nСправочник записан в {app.paths.catalog_dir}")
-        print(f"Отчёт: {app.paths.import_report_file}")
-    elif args.report:
-        Path(args.report).write_text(report_text, encoding="utf-8")
-        print(f"\nОтчёт: {args.report}")
-    else:
-        print("\nПробный запуск: ничего не записано.")
-    return 0
 
 
 # ── справочник ────────────────────────────────────────────────────────────────
@@ -291,12 +261,6 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--profile", help="профиль персонажа")
     parser.add_argument("--lang", help="язык сообщений")
     sub = parser.add_subparsers(dest="command", required=True)
-
-    p = sub.add_parser("import-obsidian", help="разобрать папку Алхимия/ (FR-10.1)")
-    p.add_argument("source", help="путь к папке Алхимия")
-    p.add_argument("--dry-run", action="store_true", help="только отчёт, ничего не записывать")
-    p.add_argument("--report", help="куда положить отчёт при --dry-run")
-    p.set_defaults(func=cmd_import_obsidian)
 
     p = sub.add_parser("catalog", help="показать справочник")
     p.add_argument("what", choices=["ingredients", "potions"])

@@ -149,7 +149,7 @@ def check_catalog(
     ingredients: Iterable[Ingredient],
     potions: Iterable[Potion],
 ) -> list[Message]:
-    """Проверки П-3.2, П-5.2 и П-5.6 над всем каталогом (нужно после импорта, 03 §7.4)."""
+    """Проверки П-3.2, П-5.2 и П-5.6 над всем каталогом (нужно после обмена, 03 §6.9)."""
     ingredients = list(ingredients)
     potions = list(potions)
     messages: list[Message] = []

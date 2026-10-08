@@ -1,4 +1,4 @@
-"""Точка входа `python -m alchimist` (03 §7)."""
+"""Точка входа `python -m alchimist`."""
 
 from alchimist.cli.__main__ import main
 

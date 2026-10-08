@@ -32,22 +32,6 @@ class WarningCode(StrEnum):
     RECIPE_NO_ELEMENTS = "recipe_empty_elements"
     #: Реагент без элементов.
     INGREDIENT_NO_ELEMENTS = "ingredient_no_elements"
-    #: Импорт: не разобрали рецепт, сырой текст ушёл в recipe_note.
-    IMPORT_RECIPE_UNPARSED = "import_recipe_unparsed"
-    #: Импорт: не узнали элемент.
-    IMPORT_UNKNOWN_ELEMENT = "import_unknown_element"
-    #: Импорт: не узнали редкость.
-    IMPORT_UNKNOWN_RARITY = "import_unknown_rarity"
-    #: Импорт: имя повторяется, id получил суффикс.
-    IMPORT_DUPLICATE_NAME = "import_duplicate_name"
-    #: Импорт: непонятная пометка в скобках.
-    IMPORT_UNKNOWN_TAG = "import_unknown_tag"
-    #: Импорт: применён синоним («Ветер» → Воздух, «Жидкость» → Жидкая).
-    IMPORT_SYNONYM_APPLIED = "import_synonym_applied"
-    #: Импорт: указатель «По реагентам» расходится с карточкой.
-    IMPORT_INDEX_MISMATCH = "import_index_mismatch"
-    #: Импорт: запись без блока элементов.
-    IMPORT_NO_ELEMENTS = "import_no_elements"
     #: Хранилище: файл повреждён, взята резервная копия.
     STORAGE_RECOVERED_FROM_BAK = "storage_recovered_from_bak"
 

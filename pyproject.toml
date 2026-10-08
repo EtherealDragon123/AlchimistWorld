@@ -70,12 +70,12 @@ root_package = "alchimist"
 include_external_packages = true
 
 [[tool.importlinter.contracts]]
-name = "Слои приложения: ui/cli → services → storage/importers → core"
+name = "Слои приложения: ui/cli → services → storage → core"
 type = "layers"
 layers = [
   "alchimist.ui_qt : alchimist.cli",
   "alchimist.services",
-  "alchimist.storage : alchimist.importers",
+  "alchimist.storage",
   "alchimist.core",
 ]
 
@@ -90,7 +90,6 @@ forbidden_modules = [
   "tomli_w",
   "babel",
   "alchimist.storage",
-  "alchimist.importers",
   "alchimist.services",
   "alchimist.ui_qt",
   "alchimist.cli",
@@ -103,7 +102,6 @@ type = "forbidden"
 source_modules = [
   "alchimist.core",
   "alchimist.storage",
-  "alchimist.importers",
   "alchimist.services",
   "alchimist.i18n",
   "alchimist.cli",
@@ -114,5 +112,5 @@ forbidden_modules = ["PySide6", "shiboken6"]
 name = "Интерфейс не лезет в хранилище напрямую"
 type = "forbidden"
 source_modules = ["alchimist.ui_qt"]
-forbidden_modules = ["alchimist.storage", "alchimist.importers"]
+forbidden_modules = ["alchimist.storage"]
 allow_indirect_imports = true

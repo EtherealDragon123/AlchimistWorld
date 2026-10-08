@@ -43,7 +43,7 @@ ELEMENT_NAMES_RU: dict[Element, str] = {
     Element.MAGIC: "Магия",
 }
 
-#: Синонимы для импорта и поиска (П-1.2: «Ветер» = Воздух).
+#: Синонимы для поиска (П-1.2: «Ветер» = Воздух).
 ELEMENT_SYNONYMS_RU: dict[str, Element] = {
     "огонь": Element.FIRE,
     "вода": Element.WATER,

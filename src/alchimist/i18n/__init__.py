@@ -75,24 +75,6 @@ _TEMPLATES: dict[str, str] = {
     WarningCode.RECIPE_NO_BASES: "«{name}»: в рецепте не выбрана ни одна основа",
     WarningCode.RECIPE_NO_ELEMENTS: "«{name}»: в рецепте не указано ни одного элемента",
     WarningCode.INGREDIENT_NO_ELEMENTS: "«{name}»: не указано ни одного элемента",
-    WarningCode.IMPORT_RECIPE_UNPARSED: (
-        "«{name}»: рецепт не разобран, сохранён как примечание — {text}"
-    ),
-    WarningCode.IMPORT_UNKNOWN_ELEMENT: "«{name}»: непонятный элемент «{value}»",
-    WarningCode.IMPORT_UNKNOWN_RARITY: (
-        "«{name}»: не удалось определить редкость ({source}, строка {line}), взята обычная"
-    ),
-    WarningCode.IMPORT_DUPLICATE_NAME: (
-        "«{name}» встречается не первый раз, второй записи присвоен id «{id}» — решите вручную"
-    ),
-    WarningCode.IMPORT_UNKNOWN_TAG: "«{name}»: пометка «{value}» перенесена в отчёт",
-    WarningCode.IMPORT_INDEX_MISMATCH: (
-        "{source}: ссылка подписана «{label}», а ведёт на «{target}»"
-    ),
-    WarningCode.IMPORT_NO_ELEMENTS: (
-        "«{name}»: не найдена строка с реагентами ({source}, строка {line})"
-    ),
-    WarningCode.IMPORT_SYNONYM_APPLIED: "«{value}» прочитано как «{canonical}»",
     WarningCode.STORAGE_RECOVERED_FROM_BAK: (
         "Файл {path} не читается, взята резервная копия {backup}"
     ),

@@ -26,7 +26,6 @@ from PySide6.QtWidgets import (
 from alchimist.core.errors import AlchimistError
 from alchimist.core.models import KIT_NAMES_RU, THEME_NAMES_RU, Kit, Theme
 from alchimist.i18n import AVAILABLE_LANGUAGES, _, describe
-from alchimist.services.importing import render_report, run_import
 from alchimist.ui_qt.dialogs.merge_dialog import MergeDialog
 from alchimist.ui_qt.pages.base import Page
 from alchimist.ui_qt.widgets.common import hint_label, page_heading
@@ -106,9 +105,6 @@ class SettingsPage(Page):
         import_button = QPushButton(_("Импорт справочника…"))
         import_button.clicked.connect(self._import_catalog)
         exchange_row.addWidget(import_button)
-        obsidian_button = QPushButton(_("Импорт из Obsidian…"))
-        obsidian_button.clicked.connect(self._import_obsidian)
-        exchange_row.addWidget(obsidian_button)
         exchange_row.addStretch(1)
         exchange_layout.addLayout(exchange_row)
         exchange_layout.addWidget(
@@ -237,32 +233,3 @@ class SettingsPage(Page):
             )
         else:
             QMessageBox.information(self, _("Готово"), _("Справочник обновлён."))
-
-    def _import_obsidian(self) -> None:
-        folder = QFileDialog.getExistingDirectory(self, _("Папка «Алхимия»"))
-        if not folder:
-            return
-        source = Path(folder)
-        result = run_import(source, None, dry_run=True)
-        summary = _(
-            "Реагентов: {ingredients}\nЗелий: {potions} (известных рецептов: {known})\n"
-            "Замечаний: {messages}\n\nЗаменить справочник целиком?"
-        ).format(
-            ingredients=len(result.report.ingredients),
-            potions=len(result.report.potions),
-            known=result.report.known_recipes,
-            messages=len(result.messages),
-        )
-        answer = QMessageBox.question(self, _("Импорт из Obsidian"), summary)
-        if answer != QMessageBox.StandardButton.Yes:
-            return
-        applied = run_import(source, self.app.catalog, dry_run=False)
-        self.app.brewing.invalidate()
-        report_path = self.app.paths.import_report_file
-        report_path.parent.mkdir(parents=True, exist_ok=True)
-        report_path.write_text(render_report(applied, source), encoding="utf-8")
-        QMessageBox.information(
-            self,
-            _("Готово"),
-            _("Справочник заменён. Отчёт: {path}").format(path=report_path),
-        )

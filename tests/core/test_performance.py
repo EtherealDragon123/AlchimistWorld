@@ -4,8 +4,6 @@ import os
 import random
 import time
 
-import pytest
-
 from alchimist.core.elements import ELEMENT_ORDER
 from alchimist.core.elements import ElementVector as EV
 from alchimist.core.matcher import StockItem, almost_ready, brewable
@@ -81,21 +79,16 @@ def test_brewing_with_excess_stays_bounded() -> None:
     assert elapsed < 5.0 * SLOWDOWN, f"подбор с излишком занял {elapsed:.1f} с"
 
 
-def test_real_scale_stays_fast() -> None:
+def test_real_scale_stays_fast(tmp_path, campaign_file) -> None:
     """На данных настоящей кампании полный подбор незаметен для глаза."""
-    from pathlib import Path
+    from alchimist.services import build_app
 
-    from alchimist.core.matcher import StockItem
-    from alchimist.importers.obsidian import import_obsidian
-
-    source = Path(__file__).resolve().parents[2] / "Алхимия"
-    if not source.exists():
-        pytest.skip("нет исходных заметок")
-    report = import_obsidian(source)
-    stock = [StockItem(ingredient, 5) for ingredient in report.ingredients]
+    app = build_app(tmp_path)
+    app.exchange.apply(app.exchange.plan(campaign_file))
+    stock = [StockItem(ingredient, 5) for ingredient in app.catalog.ingredients()]
 
     start = time.perf_counter()
-    brewable(report.potions, stock, [Kit.ALCHEMIST], max_excess=2, max_portions=3)
+    brewable(app.catalog.potions(), stock, [Kit.ALCHEMIST], max_excess=2, max_portions=3)
     elapsed = time.perf_counter() - start
     assert elapsed < 0.5 * SLOWDOWN, f"подбор занял {elapsed * 1000:.0f} мс"
 

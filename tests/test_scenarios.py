@@ -1,8 +1,6 @@
-"""Сценарии из ТЗ (02 §3) на реальных данных из заметок."""
+"""Сценарии из ТЗ (02 §3) на справочнике настоящей кампании."""
 
 from __future__ import annotations
-
-from pathlib import Path
 
 import pytest
 
@@ -20,16 +18,12 @@ from alchimist.core.models import (
 )
 from alchimist.services import build_app
 from alchimist.services.brewing import BrewRequest
-from alchimist.services.importing import run_import
-
-SOURCE = Path(__file__).resolve().parents[1] / "Алхимия"
-pytestmark = pytest.mark.skipif(not SOURCE.exists(), reason="нет исходных заметок")
 
 
 @pytest.fixture
-def app(tmp_path):
+def app(tmp_path, campaign_file):
     service = build_app(tmp_path)
-    run_import(SOURCE, service.catalog, dry_run=False)
+    service.exchange.apply(service.exchange.plan(campaign_file))
     return service
 
 
@@ -166,10 +160,10 @@ def test_c7_party_exchange(app, tmp_path) -> None:
 
     other = build_app(tmp_path / "other")
     plan = other.exchange.plan(path)
-    assert len(plan.added) == 64 + 140
+    assert len(plan.added) == 64 + 139
     other.exchange.apply(plan)
     assert other.catalog.ingredient("pepel-feniksa").rarity is Rarity.LEGENDARY
-    assert len(other.catalog.potions()) == 140
+    assert len(other.catalog.potions()) == 139
 
 
 def test_c8_using_a_potion(app) -> None:
