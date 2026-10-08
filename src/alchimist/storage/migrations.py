@@ -17,14 +17,13 @@ from alchimist.core.errors import ErrorCode, StorageError
 
 #: Текущие версии схем.
 CURRENT_VERSIONS: dict[str, int] = {
-    "ingredients": 1,
+    "ingredients": 2,
     "potions": 1,
-    "bases": 1,
     "inventory": 1,
-    "journal": 3,
-    "queue": 1,
+    "journal": 4,
+    "queue": 2,
     "settings": 1,
-    "catalog-export": 1,
+    "catalog-export": 2,
     "character": 1,
 }
 
@@ -61,16 +60,56 @@ def _journal_v2_to_v3(data: dict[str, Any]) -> dict[str, Any]:
     return data
 
 
+def _ingredient_v1_to_v2(item: dict[str, Any]) -> dict[str, Any]:
+    """Категории «Трава» больше нет: травы — это растения (П-3.3).
+
+    Флаг `is_herb` уходит вместе с ней: травник теперь работает ровно с категорией
+    «Растение» (П-6.3). Реагент, у которого флаг стоял не у растения, травнику больше
+    не доступен — в данных кампании таких не было.
+    """
+    item = {key: value for key, value in item.items() if key != "is_herb"}
+    if item.get("category") == "herb":
+        item["category"] = "plant"
+    return item
+
+
+def _ingredients_v1_to_v2(data: dict[str, Any]) -> dict[str, Any]:
+    """Растения вместо трав (см. `_ingredient_v1_to_v2`).
+
+    Версия поднята ещё и ради категории «Основа» (П-4.4): приложение постарше её не
+    знает и на справочнике с особой основой упало бы, а так честно скажет, что формат
+    новее, чем оно понимает.
+    """
+    return {**data, "ingredients": [_ingredient_v1_to_v2(i) for i in data.get("ingredients", [])]}
+
+
+def _journal_v3_to_v4(data: dict[str, Any]) -> dict[str, Any]:
+    """У варки появилась особая основа (`base_ingredient`, П-4.4); старым записям её нет.
+
+    Версия поднята, чтобы приложение постарше не переписало журнал без этого ключа:
+    иначе отмена такой варки не вернула бы основу в сумку.
+    """
+    return data
+
+
+def _queue_v1_to_v2(data: dict[str, Any]) -> dict[str, Any]:
+    """Запись очереди может стоять на особой основе (`base_ingredient`, П-4.4).
+
+    Данные не меняются; версия поднята по той же причине, что и у журнала.
+    """
+    return data
+
+
 #: Цепочки миграций: MIGRATIONS["ingredients"][1] превращает v1 в v2.
 MIGRATIONS: dict[str, dict[int, Migration]] = {
-    "ingredients": {},
+    "ingredients": {1: _ingredients_v1_to_v2},
     "potions": {},
-    "bases": {},
     "inventory": {},
-    "journal": {1: _journal_v1_to_v2, 2: _journal_v2_to_v3},
-    "queue": {},
+    "journal": {1: _journal_v1_to_v2, 2: _journal_v2_to_v3, 3: _journal_v3_to_v4},
+    "queue": {1: _queue_v1_to_v2},
     "settings": {},
-    "catalog-export": {},
+    # Файл обмена устроен как справочник: реагенты в нём мигрируют так же.
+    "catalog-export": {1: _ingredients_v1_to_v2},
     "character": {},
 }
 

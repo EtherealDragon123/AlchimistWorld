@@ -23,6 +23,7 @@ from alchimist.core.models import (
     KIND_NAMES_RU,
     RARITY_NAMES_RU,
     TAG_BLACK_MARKET,
+    Ingredient,
     Potion,
     PotionKind,
     Rarity,
@@ -35,12 +36,23 @@ from alchimist.ui_qt.widgets.element_counter import ElementCounters
 
 
 class RecipeEditor(QGroupBox):
-    """Чекбоксы основ + счётчики на каждый из 7 элементов (FR-2.4)."""
+    """Чекбоксы основ или особая основа + счётчики на каждый из 7 элементов (FR-2.4)."""
 
-    def __init__(self, parent: QWidget | None = None) -> None:
+    def __init__(
+        self, parent: QWidget | None = None, *, specials: list[Ingredient] | None = None
+    ) -> None:
         super().__init__(_("Рецепт"), parent)
         self.known = QCheckBox(_("Рецепт известен"))
         self.bases = {base: QCheckBox(BASE_NAMES_RU[base]) for base in BASE_ORDER}
+        # Особая основа (П-4.4): рецепт варится только на ней, обычные основы не нужны.
+        self.special = QComboBox()
+        self.special.addItem(_("нет — обычные основы"), None)
+        for ingredient in specials or []:
+            self.special.addItem(ingredient.name, ingredient.id)
+        self.special.setToolTip(
+            _("Рецепт варится только на этой особой основе; её элементы в сумму не идут")
+        )
+        self.special.currentIndexChanged.connect(lambda _i: self._toggle(self.known.isChecked()))
         self.elements = ElementCounters(columns=2, maximum=9)
         self.note = QLineEdit()
         self.note.setPlaceholderText(_("Примечание к рецепту, если он не сводится к элементам"))
@@ -53,6 +65,7 @@ class RecipeEditor(QGroupBox):
         form = QFormLayout(self)
         form.addRow("", self.known)
         form.addRow(_("Основа"), bases_row)
+        form.addRow(_("Особая основа"), self.special)
         form.addRow(_("Элементы"), self.elements)
         form.addRow(_("Примечание"), self.note)
 
@@ -60,14 +73,19 @@ class RecipeEditor(QGroupBox):
         self._toggle(False)
 
     def _toggle(self, on: bool) -> None:
+        special = self.special.currentData() is not None
         for check in self.bases.values():
-            check.setEnabled(on)
+            check.setEnabled(on and not special)
+        self.special.setEnabled(on)
         self.elements.setEnabled(on)
 
     def set_recipe(self, recipe: Recipe | None, note: str | None) -> None:
         self.known.setChecked(recipe is not None)
         for base, check in self.bases.items():
             check.setChecked(bool(recipe) and base in recipe.bases)
+        required = recipe.required_base_id if recipe else None
+        index = self.special.findData(required) if required else 0
+        self.special.setCurrentIndex(max(0, index))
         self.elements.set_vector(recipe.elements if recipe else ElementVector())
         self.note.setText(note or "")
         self._toggle(recipe is not None)
@@ -75,6 +93,11 @@ class RecipeEditor(QGroupBox):
     def recipe(self) -> Recipe | None:
         if not self.known.isChecked():
             return None
+        special = self.special.currentData()
+        if special:
+            return Recipe(
+                bases=frozenset(), elements=self.elements.vector(), required_base_id=special
+            )
         bases = frozenset(b for b, c in self.bases.items() if c.isChecked())
         return Recipe(bases=bases, elements=self.elements.vector())
 
@@ -115,7 +138,7 @@ class PotionDialog(QDialog):
         self.description = QPlainTextEdit()
         self.description.setPlaceholderText(_("Описание эффекта (Markdown)"))
         self.hidden = QCheckBox(_("Скрыто"))
-        self.recipe_editor = RecipeEditor()
+        self.recipe_editor = RecipeEditor(specials=app.catalog.special_bases(include_hidden=True))
         self.messages = MessageStrip()
 
         if potion:
@@ -156,6 +179,7 @@ class PotionDialog(QDialog):
         self.recipe_editor.known.toggled.connect(lambda _v: self._revalidate())
         for check in self.recipe_editor.bases.values():
             check.toggled.connect(lambda _v: self._revalidate())
+        self.recipe_editor.special.currentIndexChanged.connect(lambda _i: self._revalidate())
         self._revalidate()
 
     def _revalidate(self) -> None:

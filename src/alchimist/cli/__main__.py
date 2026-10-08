@@ -17,6 +17,7 @@ from alchimist.core.models import (
     JournalEntryType,
     Kit,
     Outcome,
+    is_special_base_key,
 )
 from alchimist.i18n import _, describe, set_language
 from alchimist.services import build_app
@@ -38,17 +39,17 @@ def cmd_catalog(args: argparse.Namespace) -> int:
     app = _app(args)
     if args.what == "ingredients":
         for item in app.catalog.ingredients():
-            herb = " [травы]" if item.is_herb else ""
             habitats = f" ({', '.join(item.habitats)})" if item.habitats else ""
             print(
                 f"{item.name:38} {RARITY_NAMES_RU[item.rarity]:12} "
                 f"{CATEGORY_NAMES_RU[item.category]:10} {item.elements.format_ru():30}"
-                f"{herb}{habitats}"
+                f"{habitats}"
             )
     else:
         for item in app.catalog.potions():
             if item.recipe:
-                recipe = f"{item.recipe.format_bases_ru()} · {item.recipe.elements.format_ru()}"
+                bases = app.catalog.bases_text(item.recipe)
+                recipe = f"{bases} · {item.recipe.elements.format_ru()}"
             elif app.catalog.has_recipe(item.id):
                 recipe = "рецепт не изучен"
             else:
@@ -58,6 +59,15 @@ def cmd_catalog(args: argparse.Namespace) -> int:
                 f"{KIND_NAMES_RU[item.kind]:7} {recipe}"
             )
     return 0
+
+
+def _base_name(app: AppService, base) -> str:
+    """Основа записи журнала: тип строчными или название особой основы (П-4.4)."""
+    if base is None:
+        return "—"
+    if is_special_base_key(base):
+        return app.catalog.base_names().get(str(base), str(base))
+    return BASE_NAMES_RU[base].lower()
 
 
 # ── инвентарь ─────────────────────────────────────────────────────────────────
@@ -149,10 +159,11 @@ def cmd_almost(args: argparse.Namespace) -> int:
     app = _app(args)
     rows = app.brewing.almost(max_missing=args.max_missing)
     for row in rows:
-        print(
-            f"{row.potion.name}: не хватает {row.missing.format_ru()}"
-            f"  (основа: {BASE_NAMES_RU[row.base].lower()})"
-        )
+        missing = [row.missing.format_ru()] if row.missing else []
+        if row.missing_base and row.base_ingredient is not None:
+            missing.insert(0, f"основа «{row.base_ingredient.name}»")
+        base = row.base_ingredient.name if row.base_ingredient else BASE_NAMES_RU[row.base]
+        print(f"{row.potion.name}: не хватает {', '.join(missing)}  (основа: {base.lower()})")
         for filler in row.fillers:
             names = " + ".join(
                 f"{p.ingredient.name}×{p.count}" if p.count > 1 else p.ingredient.name
@@ -186,7 +197,7 @@ def cmd_journal(args: argparse.Namespace) -> int:
                 got = f" → {potions[entry.result.potion_id].name}"
             outcome = "успех" if entry.outcome is Outcome.SUCCESS else "провал"
             print(
-                f"{stamp}  варка  {BASE_NAMES_RU[entry.base].lower() if entry.base else '—'}: "
+                f"{stamp}  варка  {_base_name(app, entry.base_key)}: "
                 f"{reagents} = {entry.elements.format_ru()}  {outcome}{got}{undone}"
             )
         elif entry.type is JournalEntryType.DISTILL:
@@ -276,7 +287,7 @@ def cmd_learn(args: argparse.Namespace) -> int:
     else:
         app.learn_recipe(potion.id)
         recipe = app.catalog.potion(potion.id).recipe
-        text = f"{recipe.format_bases_ru()} · {recipe.elements.format_ru()}"
+        text = f"{app.catalog.bases_text(recipe)} · {recipe.elements.format_ru()}"
         print(f"Рецепт изучен: {potion.name} — {text}")
     return 0
 

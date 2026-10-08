@@ -54,8 +54,11 @@ def test_ingredient_category_filter(catalog_page) -> None:
     _select(tab.filters._widgets["category"], IngredientCategory.CREATURE)
     assert _names(tab.tree) == {"Кровь дракочерепахи"}
 
+    # Отдельной «Травы» больше нет: все травы — растения (П-3.3).
     _select(tab.filters._widgets["category"], IngredientCategory.PLANT)
-    assert _names(tab.tree) == {"Ледяная лоза", "Сок Стального Дерева"}
+    plants = _names(tab.tree)
+    assert {"Ледяная лоза", "Сок Стального Дерева", "Щёлкорех", "Фанана"} <= plants
+    assert "Тусклая эссенция огня" not in plants and "Кровь дракочерепахи" not in plants
 
 
 def test_ingredient_rarity_filter(catalog_page) -> None:
@@ -64,24 +67,20 @@ def test_ingredient_rarity_filter(catalog_page) -> None:
     assert _names(tab.tree) == {"Семя ночного пламени", "Кровь дракочерепахи"}
 
 
-def test_ingredient_element_and_herb_filters(catalog_page) -> None:
+def test_ingredient_element_filter(catalog_page) -> None:
     tab = catalog_page.ingredients
     from alchimist.core.elements import Element
 
     _select(tab.filters._widgets["element"], Element.MAGIC)
     assert _names(tab.tree) == {"Ледяная лоза"}
-
-    tab.filters._widgets["element"].setCurrentIndex(0)
-    tab.filters._widgets["herb"].setChecked(True)
-    assert "Тусклая эссенция огня" not in _names(tab.tree)
-    assert "Щёлкорех" in _names(tab.tree)
+    assert "herb" not in tab.filters._widgets  # фильтра «Только травы» больше нет
 
 
 def test_ingredient_filters_combine(catalog_page) -> None:
     tab = catalog_page.ingredients
-    _select(tab.filters._widgets["category"], IngredientCategory.HERB)
+    _select(tab.filters._widgets["category"], IngredientCategory.PLANT)
     _select(tab.filters._widgets["rarity"], Rarity.COMMON)
-    assert "Семя ночного пламени" not in _names(tab.tree)  # трава, но редкая
+    assert "Семя ночного пламени" not in _names(tab.tree)  # растение, но редкое
     assert "Щёлкорех" in _names(tab.tree)
 
 

@@ -146,8 +146,7 @@ def test_kits_do_not_mix_in_one_brew(potions: dict[str, Potion]) -> None:
         "herb-fire",
         "Огненная трава",
         Rarity.COMMON,
-        IngredientCategory.HERB,
-        True,
+        IngredientCategory.PLANT,
         EV.from_dict({"fire": 1}),
     )
     essence = Ingredient(
@@ -155,7 +154,6 @@ def test_kits_do_not_mix_in_one_brew(potions: dict[str, Potion]) -> None:
         "Эссенция воды",
         Rarity.COMMON,
         IngredientCategory.ESSENCE,
-        False,
         EV.from_dict({"water": 1}),
     )
     poison = Potion(

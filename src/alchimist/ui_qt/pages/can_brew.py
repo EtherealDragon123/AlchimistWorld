@@ -22,7 +22,6 @@ from PySide6.QtWidgets import (
 
 from alchimist.core.matcher import BrewOption
 from alchimist.core.models import (
-    BASE_NAMES_RU,
     KIND_NAMES_RU,
     KIT_NAMES_RU,
     RARITY_NAMES_RU,
@@ -43,6 +42,7 @@ from alchimist.ui_qt.theme import (
 from alchimist.ui_qt.widgets.common import (
     FilterBar,
     SearchBox,
+    base_text,
     difficulty_tooltip,
     hint_label,
     page_heading,
@@ -435,7 +435,7 @@ class CanBrewPage(Page):
                     row.potion.name,
                     f"×{row.portions}",
                     str(row.difficulty.total),
-                    f"{BASE_NAMES_RU[entry.base]} · {reagents}",
+                    f"{base_text(self.app, entry.base_key)} · {reagents}",
                     state,
                 ]
             )
@@ -503,7 +503,7 @@ class CanBrewPage(Page):
             return
         dialog = BrewDialog(
             self.app,
-            entry.base,
+            entry.base_key,
             entry.reagent_map(),
             self,
             expected=self.app.catalog.potion(entry.potion_id),

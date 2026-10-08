@@ -9,6 +9,7 @@ from alchimist.core.elements import ElementVector
 from alchimist.core.errors import Message, WarningCode, warning
 from alchimist.core.models import (
     ALL_BASES,
+    BaseKey,
     BaseType,
     Ingredient,
     Kit,
@@ -16,9 +17,11 @@ from alchimist.core.models import (
     PotionKind,
     Rarity,
     Recipe,
+    is_special_base_key,
 )
 
-RecipeKey = tuple[BaseType, ElementVector]
+#: Основа (тип или особая) и сумма элементов — по этой паре рецепты не должны совпадать.
+RecipeKey = tuple[BaseKey, ElementVector]
 
 #: Какие основы разрешает набор (П-6.3).
 KIT_BASES: dict[Kit, frozenset[BaseType]] = {
@@ -31,14 +34,17 @@ KIT_BASES: dict[Kit, frozenset[BaseType]] = {
 
 
 # ── Разрешения наборов ────────────────────────────────────────────────────────
-def kit_allows_base(kit: Kit, base: BaseType) -> bool:
+def kit_allows_base(kit: Kit, base: BaseKey) -> bool:
+    """Особая основа доступна любому набору, в том числе травнику (П-4.4)."""
+    if is_special_base_key(base):
+        return True
     return base in KIT_BASES[kit]
 
 
 def kit_allows_ingredient(kit: Kit, ingredient: Ingredient) -> bool:
-    """Травник работает только с тем, что помечено флагом «Травы» (П-3.3, П-6.3)."""
+    """Травник работает только с растениями (П-3.3, П-6.3)."""
     if kit is Kit.HERBALIST:
-        return ingredient.is_herb
+        return ingredient.is_plant
     return True
 
 
@@ -51,17 +57,22 @@ def kit_allows_potion(kit: Kit, potion: Potion) -> bool:
 
 # ── П-3.2: число единиц реагента = его редкость ──────────────────────────────
 def check_ingredient(ingredient: Ingredient) -> list[Message]:
-    """Предупреждения по реагенту. Сохранению не мешают (FR-1.4)."""
+    """Предупреждения по реагенту. Сохранению не мешают (FR-1.4).
+
+    У особой основы единиц на одну меньше редкости (П-4.4): редкая — два элемента.
+    Без элементов не бывает ни реагента, ни особой основы.
+    """
     messages: list[Message] = []
     total = ingredient.elements.total
+    expected = ingredient.expected_units()
     if total == 0:
         messages.append(warning(WarningCode.INGREDIENT_NO_ELEMENTS, name=ingredient.name))
-    elif total != int(ingredient.rarity):
+    elif total != expected:
         messages.append(
             warning(
                 WarningCode.RARITY_UNITS_MISMATCH,
                 name=ingredient.name,
-                expected=int(ingredient.rarity),
+                expected=expected,
                 actual=total,
             )
         )
@@ -75,7 +86,8 @@ def expected_recipe_units(potion: Potion) -> int:
 
 def check_recipe_size(potion: Potion, recipe: Recipe) -> list[Message]:
     messages: list[Message] = []
-    if not recipe.bases:
+    # У рецепта на особой основе обычных основ нет и быть не должно (П-4.4).
+    if not recipe.bases and not recipe.required_base_id:
         messages.append(warning(WarningCode.RECIPE_NO_BASES, name=potion.name))
     total = recipe.elements.total
     if total == 0:
@@ -110,9 +122,9 @@ def find_collisions(
     index: Mapping[RecipeKey, set[str]],
     potion_id: str,
     recipe: Recipe,
-) -> dict[BaseType, set[str]]:
+) -> dict[BaseKey, set[str]]:
     """Какие основы рецепта конфликтуют и с какими зельями (кроме самого зелья)."""
-    collisions: dict[BaseType, set[str]] = {}
+    collisions: dict[BaseKey, set[str]] = {}
     for base, elements in recipe.index_keys():
         others = {pid for pid in index.get((base, elements), set()) if pid != potion_id}
         if others:
@@ -125,19 +137,23 @@ def check_recipe(
     recipe: Recipe,
     index: Mapping[RecipeKey, set[str]],
     names: Mapping[str, str] | None = None,
+    base_names: Mapping[str, str] | None = None,
 ) -> list[Message]:
     """Полная проверка рецепта по П-5.6: коллизия + размер.
 
-    `names` — id → название, чтобы предупреждение о коллизии несло читаемое имя.
+    `names` — id зелья → название, `base_names` — id особой основы → название:
+    чтобы предупреждение о коллизии несло читаемые имена.
     """
     messages = check_recipe_size(potion, recipe)
     names = names or {}
     for base, others in find_collisions(index, potion.id, recipe).items():
+        special = is_special_base_key(base)
         messages.append(
             warning(
                 WarningCode.RECIPE_COLLISION,
                 name=potion.name,
-                base=str(base.value),
+                base=str(base),
+                base_name=(base_names or {}).get(str(base), str(base)) if special else None,
                 others=sorted(names.get(pid, pid) for pid in others),
                 other_ids=sorted(others),
             )

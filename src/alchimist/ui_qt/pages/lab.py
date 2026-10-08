@@ -27,7 +27,13 @@ from PySide6.QtWidgets import (
 
 from alchimist.core.distill import MAX_REAGENTS
 from alchimist.core.errors import AlchimistError
-from alchimist.core.models import BASE_NAMES_RU, BASE_ORDER, KIT_NAMES_RU, Outcome, ResultKind
+from alchimist.core.models import (
+    KIT_NAMES_RU,
+    Outcome,
+    ResultKind,
+    as_base_key,
+    is_special_base_key,
+)
 from alchimist.i18n import _, describe
 from alchimist.ui_qt.dialogs.brew_dialog import BrewDialog
 from alchimist.ui_qt.pages.base import Page
@@ -36,6 +42,7 @@ from alchimist.ui_qt.widgets.common import (
     MessageStrip,
     SearchBox,
     difficulty_tooltip,
+    fill_base_combo,
     format_difficulty,
     hint_label,
     page_heading,
@@ -69,10 +76,16 @@ class LabPage(Page):
         header.addWidget(self.mode)
         self.base_label = QLabel(_("Основа"))
         header.addWidget(self.base_label)
+        # Три типа основы и особые основы из сумки (П-4.4): см. `_fill_bases`.
         self.base = QComboBox()
-        for base in BASE_ORDER:
-            self.base.addItem(BASE_NAMES_RU[base], base)
-        self.base.currentIndexChanged.connect(lambda _i: self._recalc())
+        self.base.setToolTip(
+            _(
+                "Особая основа работает только в рецептах, которые требуют именно её; "
+                "её элементы в сумму не идут"
+            )
+        )
+        fill_base_combo(self.base, None, [])
+        self.base.currentIndexChanged.connect(lambda _i: self._base_changed())
         header.addWidget(self.base)
         box.addLayout(header)
 
@@ -246,10 +259,13 @@ class LabPage(Page):
     # ── наполнение ────────────────────────────────────────────────────────
     def refresh(self) -> None:
         super().refresh()
-        # Занятое очередью в котёл не кладётся (FR-12.6).
+        self._fill_bases()
+        # Занятое очередью в котёл не кладётся (FR-12.6), как и особая основа под котлом.
         available = self.app.brewing.available_quantities()
         self.cauldron = {
-            i: min(q, available.get(i, 0)) for i, q in self.cauldron.items() if available.get(i, 0)
+            i: min(q, available.get(i, 0) - self._held(i))
+            for i, q in self.cauldron.items()
+            if available.get(i, 0) - self._held(i) > 0
         }
         self._fill_stock()
         self._fill_pot()
@@ -269,7 +285,7 @@ class LabPage(Page):
             if needle and needle not in row.ingredient.name.casefold():
                 continue
             free = available.get(row.ingredient.id, 0)
-            left = free - self.cauldron.get(row.ingredient.id, 0)
+            left = free - self.cauldron.get(row.ingredient.id, 0) - self._held(row.ingredient.id)
             item = QTreeWidgetItem(
                 [row.ingredient.name, row.ingredient.elements.format_ru(), str(left)]
             )
@@ -309,7 +325,7 @@ class LabPage(Page):
             return
         ingredient_id = item.data(0, Qt.ItemDataRole.UserRole)
         free = self.app.brewing.available_quantities().get(ingredient_id, 0)
-        if self.cauldron.get(ingredient_id, 0) >= free:
+        if self.cauldron.get(ingredient_id, 0) + self._held(ingredient_id) >= free:
             return
         self.cauldron[ingredient_id] = self.cauldron.get(ingredient_id, 0) + 1
         self._fill_stock()
@@ -331,6 +347,36 @@ class LabPage(Page):
 
     def _clear(self) -> None:
         self.cauldron.clear()
+        self._fill_stock()
+        self._fill_pot()
+        self._recalc()
+
+    # ── особая основа (П-4.4) ─────────────────────────────────────────────
+    def _special_base(self) -> str | None:
+        base = as_base_key(self.base.currentData())
+        return str(base) if is_special_base_key(base) else None
+
+    def _held(self, ingredient_id: str) -> int:
+        """Выбранная основой особая основа занимает одну штуку из сумки."""
+        return 1 if self._special_base() == ingredient_id else 0
+
+    def _fill_bases(self) -> None:
+        """Особые основы — только те, что есть в сумке и не заняты очередью."""
+        available = self.app.brewing.available_quantities()
+        specials = [i for i in self.app.catalog.special_bases() if available.get(i.id, 0) > 0]
+        fill_base_combo(self.base, self.base.currentData(), specials)
+
+    def _base_changed(self) -> None:
+        """Последнюю штуку особой основы нельзя положить и основой, и в котёл."""
+        special = self._special_base()
+        if special is not None:
+            free = self.app.brewing.available_quantities().get(special, 0)
+            in_pot = self.cauldron.get(special, 0)
+            if in_pot + 1 > free:
+                if in_pot > 1:
+                    self.cauldron[special] = in_pot - 1
+                else:
+                    self.cauldron.pop(special, None)
         self._fill_stock()
         self._fill_pot()
         self._recalc()
@@ -366,8 +412,17 @@ class LabPage(Page):
                 )
                 + "</span>"
             )
+        elif self._special_base() is not None:
+            # Рецептов на особых основах единицы: без рецепта это почти наверняка провал.
+            lines.append(
+                f'<span style="color:{warning_color().name()}">'
+                + _("Рецепта на этой основе нет — скорее всего провал")
+                + "</span>"
+            )
         else:
             lines.append(_("Ни один известный рецепт этим не покрыть."))
+        if self._special_base() is not None:
+            lines.append(_("Элементы особой основы в сумму не идут (П-4.4)."))
         if hint.was_tried:
             last = hint.history[0]
             lines.append(_("Уже пробовали: {result}").format(result=_result_text(last)))

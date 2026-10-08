@@ -27,17 +27,12 @@ def ing(
     rarity: Rarity,
     category: IngredientCategory,
     elements: dict[str, int],
-    *,
-    is_herb: bool | None = None,
 ) -> Ingredient:
-    if is_herb is None:
-        is_herb = category in (IngredientCategory.HERB, IngredientCategory.PLANT)
     return Ingredient(
         id=ident,
         name=name,
         rarity=rarity,
         category=category,
-        is_herb=is_herb,
         elements=EV.from_dict(elements),
     )
 
@@ -59,7 +54,6 @@ def potion(
 
 
 # ── Реагенты из справочника кампании ─────────────────────────────────────────
-H = IngredientCategory.HERB
 P = IngredientCategory.PLANT
 E = IngredientCategory.ESSENCE
 C = IngredientCategory.CREATURE
@@ -68,15 +62,15 @@ C = IngredientCategory.CREATURE
 @pytest.fixture
 def ingredients() -> dict[str, Ingredient]:
     items = [
-        ing("shcholkorekh", "Щёлкорех", Rarity.COMMON, H, {"fire": 1}),
-        ing("svechnaya-roza", "Свечная Роза", Rarity.COMMON, H, {"light": 1}),
-        ing("mylnaya-trava", "Мыльная Трава", Rarity.COMMON, H, {"light": 1}),
-        ing("podlunnukh", "Подлуннух", Rarity.COMMON, H, {"dark": 1}),
-        ing("mogilnaya-loza", "Могильная Лоза", Rarity.COMMON, H, {"dark": 1}),
-        ing("sopli-trollya", "Сопли Тролля", Rarity.COMMON, H, {"water": 1}),
-        ing("mertvostoy", "Мертвостой", Rarity.COMMON, H, {"water": 1}),
-        ing("tkanevyy-list", "Тканевый лист", Rarity.COMMON, H, {"earth": 1}),
-        ing("fanana", "Фанана", Rarity.COMMON, H, {"air": 1}),
+        ing("shcholkorekh", "Щёлкорех", Rarity.COMMON, P, {"fire": 1}),
+        ing("svechnaya-roza", "Свечная Роза", Rarity.COMMON, P, {"light": 1}),
+        ing("mylnaya-trava", "Мыльная Трава", Rarity.COMMON, P, {"light": 1}),
+        ing("podlunnukh", "Подлуннух", Rarity.COMMON, P, {"dark": 1}),
+        ing("mogilnaya-loza", "Могильная Лоза", Rarity.COMMON, P, {"dark": 1}),
+        ing("sopli-trollya", "Сопли Тролля", Rarity.COMMON, P, {"water": 1}),
+        ing("mertvostoy", "Мертвостой", Rarity.COMMON, P, {"water": 1}),
+        ing("tkanevyy-list", "Тканевый лист", Rarity.COMMON, P, {"earth": 1}),
+        ing("fanana", "Фанана", Rarity.COMMON, P, {"air": 1}),
         ing(
             "fosforitsiruyushchaya-essentsiya-sveta",
             "Фосфорицирующая эссенция света",
@@ -94,7 +88,7 @@ def ingredients() -> dict[str, Ingredient]:
         ing("ledyanaya-loza", "Ледяная лоза", Rarity.UNCOMMON, P, {"water": 1, "magic": 1}),
         ing("sok-stalnogo-dereva", "Сок Стального Дерева", Rarity.UNCOMMON, P, {"earth": 2}),
         ing(
-            "semya-nochnogo-plameni", "Семя ночного пламени", Rarity.RARE, H, {"dark": 2, "fire": 1}
+            "semya-nochnogo-plameni", "Семя ночного пламени", Rarity.RARE, P, {"dark": 2, "fire": 1}
         ),
         ing("krov-drakocherepakhi", "Кровь дракочерепахи", Rarity.RARE, C, {"water": 2, "fire": 1}),
     ]

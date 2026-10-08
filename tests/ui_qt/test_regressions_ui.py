@@ -25,8 +25,7 @@ def reagent(ident: str, name: str, rarity: Rarity, **elements: int) -> Ingredien
         id=ident,
         name=name,
         rarity=rarity,
-        category=IngredientCategory.HERB,
-        is_herb=True,
+        category=IngredientCategory.PLANT,
         elements=EV.from_dict(elements),
     )
 

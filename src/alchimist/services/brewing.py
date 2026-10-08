@@ -16,7 +16,7 @@ from alchimist.core.matcher import (
     stock_from,
 )
 from alchimist.core.models import (
-    BaseType,
+    BaseKey,
     BrewResult,
     Ingredient,
     JournalEntry,
@@ -27,7 +27,9 @@ from alchimist.core.models import (
     ReagentStack,
     Recipe,
     ResultKind,
+    as_base_key,
     coerce_enum,
+    is_special_base_key,
 )
 from alchimist.core.rules import (
     Difficulty,
@@ -103,7 +105,8 @@ class LabHint:
 class BrewRequest:
     """Что уходит в диалог варки (FR-7.1)."""
 
-    base: BaseType
+    #: Тип основы или id особой основы (П-4.4).
+    base: BaseKey
     reagents: dict[str, int]
     outcome: Outcome = Outcome.SUCCESS
     result_kind: ResultKind = ResultKind.KNOWN
@@ -114,7 +117,7 @@ class BrewRequest:
     note: str = ""
 
     def __post_init__(self) -> None:
-        object.__setattr__(self, "base", coerce_enum(BaseType, self.base))
+        object.__setattr__(self, "base", as_base_key(self.base))
         object.__setattr__(self, "outcome", coerce_enum(Outcome, self.outcome, Outcome.SUCCESS))
         object.__setattr__(
             self, "result_kind", coerce_enum(ResultKind, self.result_kind, ResultKind.NONE)
@@ -225,7 +228,7 @@ class BrewingService:
         return total
 
     def candidates_for(
-        self, base: BaseType, elements: ElementVector, limit: int = 12
+        self, base: BaseKey, elements: ElementVector, limit: int = 12
     ) -> list[BrewCandidate]:
         """Что получится из этой суммы на этой основе (П-8.1, П-8.2).
 
@@ -236,7 +239,9 @@ class BrewingService:
         found: list[BrewCandidate] = []
         for potion in self.catalog.potions():
             recipe = potion.recipe
-            if recipe is None or base not in recipe.bases:
+            # Особая основа подходит только рецептам, которые требуют именно её (П-4.4),
+            # а рецепты на особой основе не варятся на обычной.
+            if recipe is None or base not in recipe.base_keys():
                 continue
             portions, excess = portions_and_excess(elements, recipe.elements)
             if portions <= 0:
@@ -261,7 +266,7 @@ class BrewingService:
         )
         return found[:limit]
 
-    def hint(self, base: BaseType | None, reagents: dict[str, int]) -> LabHint:
+    def hint(self, base: BaseKey | None, reagents: dict[str, int]) -> LabHint:
         """Что выйдет, чем это грозит и не пробовали ли уже (FR-7.4, П-8)."""
         elements = self.combination_elements(reagents)
         if base is None or elements.is_empty:
@@ -272,7 +277,7 @@ class BrewingService:
         return LabHint(elements, candidates, history, self._allowed_kits(base, reagents, matches))
 
     def _allowed_kits(
-        self, base: BaseType, reagents: dict[str, int], matches: tuple[Potion, ...]
+        self, base: BaseKey, reagents: dict[str, int], matches: tuple[Potion, ...]
     ) -> tuple[Kit, ...]:
         """Какие наборы разрешают такую варку целиком (03 §4.3)."""
         ingredients = self.catalog.ingredient_map()
@@ -312,8 +317,22 @@ class BrewingService:
         if not reagents:
             raise AlchimistError(ErrorCode.NO_REAGENTS)
 
+        # Особая основа (П-4.4) списывается из сумки, одна на варку, но в сумму
+        # элементов не идёт: `elements` считаются только по реагентам котла.
+        special = request.base if is_special_base_key(request.base) else None
+        consumed = dict(reagents)
+        if special is not None:
+            base_ingredient = self.catalog.ingredient(special)
+            if not base_ingredient.is_special_base:
+                raise AlchimistError(ErrorCode.NOT_FOUND, id=special)
+            consumed[special] = consumed.get(special, 0) + 1
+            if self.inventory.reagent_qty(special) < consumed[special]:
+                raise AlchimistError(
+                    ErrorCode.NO_SPECIAL_BASE, name=base_ingredient.name, id=special
+                )
+
         elements = self.combination_elements(reagents)
-        inventory = self.inventory.consume_preview(reagents)
+        inventory = self.inventory.consume_preview(consumed)
 
         portions = max(1, request.portions)
         excess = ElementVector()
@@ -344,7 +363,8 @@ class BrewingService:
             id=new_id(),
             ts=now(),
             type=JournalEntryType.BREW,
-            base=request.base,
+            base=None if special else request.base,
+            base_ingredient_id=special,
             reagents=tuple(ReagentStack(i, q) for i, q in sorted(reagents.items())),
             elements=elements,
             outcome=request.outcome,
@@ -371,7 +391,7 @@ class BrewingService:
         self.inventory.adopt(inventory)
         self.journal.adopt(entries)
         self.invalidate()
-        self.bus.publish(InventoryChanged(tuple(reagents), potion_ids))
+        self.bus.publish(InventoryChanged(tuple(consumed), potion_ids))
         self.bus.publish(JournalChanged((entry.id,)))
 
         # Сварили запланированное — запись из очереди уходит (FR-12.4).
@@ -397,9 +417,17 @@ class BrewingService:
         """Комбинация из журнала записывается в рецепт зелья. Срабатывает П-5.6."""
         entry = self.journal.entry(entry_id)
         target = potion_id or (entry.result.potion_id if entry.result else None)
-        if not target or entry.base is None or entry.elements.is_empty:
+        if not target or entry.base_key is None or entry.elements.is_empty:
             raise AlchimistError(ErrorCode.NOT_FOUND, id=entry_id)
-        recipe = Recipe(bases=frozenset({entry.base}), elements=entry.elements)
+        if entry.base_ingredient_id:
+            # Варили на особой основе (П-4.4) — рецепт и будет требовать именно её.
+            recipe = Recipe(
+                bases=frozenset(),
+                elements=entry.elements,
+                required_base_id=entry.base_ingredient_id,
+            )
+        else:
+            recipe = Recipe(bases=frozenset({entry.base}), elements=entry.elements)
         potion, messages = self.catalog.set_recipe(target, recipe)
         self.invalidate()
         return potion, messages
@@ -412,11 +440,12 @@ class BrewingService:
             raise AlchimistError(ErrorCode.NOT_FOUND, id=entry_id)
 
         inventory = self.inventory.inventory
-        for stack in entry.reagents:
-            have = inventory.reagent_qty(stack.ingredient_id)
-            inventory = self.inventory.with_reagent(
-                inventory, stack.ingredient_id, have + stack.qty, None
-            )
+        returned = [(s.ingredient_id, s.qty) for s in entry.reagents]
+        if entry.base_ingredient_id:
+            returned.append((entry.base_ingredient_id, 1))  # особая основа — тоже назад
+        for ingredient_id, qty in returned:
+            have = inventory.reagent_qty(ingredient_id)
+            inventory = self.inventory.with_reagent(inventory, ingredient_id, have + qty, None)
         potion_ids: tuple[str, ...] = ()
         if entry.result and entry.result.potion_id and entry.yield_qty:
             have = inventory.potion_qty(entry.result.potion_id)
@@ -449,9 +478,7 @@ class BrewingService:
         self.inventory.adopt(inventory)
         self.journal.adopt(entries)
         self.invalidate()
-        self.bus.publish(
-            InventoryChanged(tuple(s.ingredient_id for s in entry.reagents), potion_ids)
-        )
+        self.bus.publish(InventoryChanged(tuple(i for i, _qty in returned), potion_ids))
         self.bus.publish(JournalChanged((entry.id,)))
         return undone
 

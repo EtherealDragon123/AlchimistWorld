@@ -81,6 +81,8 @@ class ErrorCode(StrEnum):
     LAST_CHARACTER = "last_character"
     #: Учить нечего: рецепта этого зелья нет даже в справочнике (FR-14.3).
     RECIPE_UNKNOWN = "recipe_unknown"
+    #: Варка на особой основе, а её нет в сумке (П-4.4).
+    NO_SPECIAL_BASE = "no_special_base"
 
 
 @dataclass(frozen=True, slots=True)

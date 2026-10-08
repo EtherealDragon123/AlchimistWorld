@@ -24,12 +24,11 @@ from PySide6.QtWidgets import (
 from alchimist.core.errors import AlchimistError
 from alchimist.core.matcher import Combination, portions_and_excess
 from alchimist.core.models import (
-    BASE_NAMES_RU,
-    BASE_ORDER,
-    BaseType,
+    BaseKey,
     Outcome,
     Potion,
     ResultKind,
+    as_base_key,
     coerce_enum,
 )
 from alchimist.core.rules import brew_difficulty
@@ -40,6 +39,7 @@ from alchimist.ui_qt.theme import accent_color, bold, warning_color
 from alchimist.ui_qt.widgets.common import (
     MessageStrip,
     difficulty_tooltip,
+    fill_base_combo,
     format_difficulty,
     hint_label,
 )
@@ -59,7 +59,7 @@ class BrewDialog(QDialog):
     def __init__(
         self,
         app: AppService,
-        base: BaseType,
+        base: BaseKey,
         reagents: dict[str, int],
         parent: QWidget | None = None,
         *,
@@ -77,10 +77,15 @@ class BrewDialog(QDialog):
         self.setMinimumWidth(560)
 
         ingredients = app.catalog.ingredient_map()
+        # Особые основы (П-4.4) — те, что есть в сумке, и та, что пришла из подбора.
         self.base = QComboBox()
-        for item in BASE_ORDER:
-            self.base.addItem(BASE_NAMES_RU[item], item)
-        self.base.setCurrentIndex(BASE_ORDER.index(base))
+        available = app.brewing.available_quantities()
+        specials = [
+            i
+            for i in app.catalog.special_bases(include_hidden=True)
+            if available.get(i.id, 0) > 0 or i.id == base
+        ]
+        fill_base_combo(self.base, as_base_key(base), specials)
 
         self.reagent_list = QListWidget()
         self.reagent_list.setMaximumHeight(120)
@@ -359,8 +364,7 @@ class BrewDialog(QDialog):
         key = self.outcome.entry.combination_key if self.outcome else None
         if key is None:
             return
-        base = coerce_enum(BaseType, key[0])
-        for potion in self.app.catalog.unlearned_exact(base, key[1]):
+        for potion in self.app.catalog.unlearned_exact(as_base_key(key[0]), key[1]):
             recipe = potion.recipe
             answer = QMessageBox.question(
                 self,
@@ -370,7 +374,7 @@ class BrewDialog(QDialog):
                     "{bases} · {elements}.\n\nИзучить этот рецепт?"
                 ).format(
                     name=potion.name,
-                    bases=recipe.format_bases_ru(),
+                    bases=self.app.catalog.bases_text(recipe),
                     elements=recipe.elements.format_ru(),
                 ),
             )

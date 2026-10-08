@@ -119,13 +119,17 @@ def test_poisoner_kit(potions: dict[str, Potion]) -> None:
     assert all(kit_allows_base(Kit.POISONER, b) for b in ALL_BASES)
 
 
-def test_plants_are_herbs_by_default() -> None:
+def test_herbalist_works_with_plants_only() -> None:
+    """П-6.3: травнику можно ровно растения — флага «Травы» больше нет."""
     plant = Ingredient(
         id="x",
         name="Сок",
         rarity=Rarity.UNCOMMON,
         category=IngredientCategory.PLANT,
-        is_herb=True,
         elements=EV.from_dict({"earth": 2}),
     )
     assert kit_allows_ingredient(Kit.HERBALIST, plant)
+    for category in IngredientCategory:
+        if category is not IngredientCategory.PLANT:
+            other = plant.copy(category=category)
+            assert not kit_allows_ingredient(Kit.HERBALIST, other), category

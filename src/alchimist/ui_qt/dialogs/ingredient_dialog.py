@@ -17,7 +17,6 @@ from PySide6.QtWidgets import (
 from alchimist.core.elements import ElementVector
 from alchimist.core.models import (
     CATEGORY_NAMES_RU,
-    HERB_CATEGORIES,
     RARITY_NAMES_RU,
     Ingredient,
     IngredientCategory,
@@ -53,7 +52,6 @@ class IngredientDialog(QDialog):
         self.category = QComboBox()
         for category in IngredientCategory:
             self.category.addItem(CATEGORY_NAMES_RU[category], category)
-        self.is_herb = QCheckBox(_("Подходит набору травника («Травы»)"))
         self.elements = ElementCounters(columns=2, maximum=9)
         self.habitats = QLineEdit()
         self.habitats.setPlaceholderText(_("Лес, Луг, Болота — через запятую"))
@@ -65,20 +63,18 @@ class IngredientDialog(QDialog):
         if ingredient:
             self.rarity.setCurrentIndex(list(Rarity).index(ingredient.rarity))
             self.category.setCurrentIndex(list(IngredientCategory).index(ingredient.category))
-            self.is_herb.setChecked(ingredient.is_herb)
             self.elements.set_vector(ingredient.elements)
             self.habitats.setText(", ".join(ingredient.habitats))
             self.description.setPlainText(ingredient.description)
             self.hidden.setChecked(ingredient.hidden)
         else:
-            self.category.setCurrentIndex(list(IngredientCategory).index(IngredientCategory.HERB))
-            self.is_herb.setChecked(True)
+            self.category.setCurrentIndex(list(IngredientCategory).index(IngredientCategory.PLANT))
 
         form = QFormLayout()
         form.addRow(_("Название"), self.name)
         form.addRow(_("Редкость"), self.rarity)
         form.addRow(_("Категория"), self.category)
-        form.addRow("", self.is_herb)
+        form.addRow("", hint_label(_("Набору травника доступны только растения (П-6.3).")))
         form.addRow(_("Элементы"), self.elements)
         form.addRow(_("Места обитания"), self.habitats)
         form.addRow(_("Описание"), self.description)
@@ -94,7 +90,10 @@ class IngredientDialog(QDialog):
         layout.addLayout(form)
         layout.addWidget(
             hint_label(
-                _("П-3.2: единиц элементов должно быть столько же, сколько уровень редкости")
+                _(
+                    "П-3.2: единиц элементов столько же, сколько уровень редкости; "
+                    "у особой основы — на одну меньше (П-4.4)"
+                )
             )
         )
         layout.addWidget(self.messages)
@@ -107,9 +106,7 @@ class IngredientDialog(QDialog):
         self._revalidate()
 
     def _category_changed(self) -> None:
-        """По умолчанию флаг «Травы» выставляется по категории (П-3.3)."""
-        category = self.category.currentData()
-        self.is_herb.setChecked(category in HERB_CATEGORIES)
+        """У особой основы своё правило редкости (П-4.4) — пересчитать предупреждения."""
         self._revalidate()
 
     def _revalidate(self) -> None:
@@ -122,7 +119,6 @@ class IngredientDialog(QDialog):
             name=self.name.text().strip(),
             rarity=self.rarity.currentData(),
             category=self.category.currentData(),
-            is_herb=self.is_herb.isChecked(),
             elements=self.elements.vector() or ElementVector(),
             habitats=habitats,
             description=self.description.toPlainText().strip(),

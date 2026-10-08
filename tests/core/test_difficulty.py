@@ -146,8 +146,7 @@ def test_read_as_portions_prefers_more_portions() -> None:
         "x",
         "Двойная трава",
         Rarity.UNCOMMON,
-        IngredientCategory.HERB,
-        True,
+        IngredientCategory.PLANT,
         EV.from_dict({"fire": 4}),
     )
     combo = Combination(picks=(Pick(double, 1),))

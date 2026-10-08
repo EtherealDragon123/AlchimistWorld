@@ -24,8 +24,7 @@ def test_add_ingredient_warns_but_saves(app: AppService) -> None:
             id="",
             name="Странный корень",
             rarity=Rarity.RARE,
-            category=IngredientCategory.HERB,
-            is_herb=True,
+            category=IngredientCategory.PLANT,
             elements=EV.from_dict({"earth": 1}),
         )
     )

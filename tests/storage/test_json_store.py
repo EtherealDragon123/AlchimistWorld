@@ -55,7 +55,7 @@ def test_files_are_human_readable(paths: Paths, catalog: Catalog) -> None:
     text = paths.ingredients_file.read_text(encoding="utf-8")
     assert "Щёлкорех" in text
     assert "\\u" not in text
-    assert '\n  "schema_version": 1,' in text
+    assert '\n  "schema_version": 2,' in text
     assert text.endswith("\n")
 
 
@@ -245,7 +245,6 @@ def test_ingredient_fields_survive(paths: Paths) -> None:
         name="Проверка",
         rarity=Rarity.EPIC,
         category=IngredientCategory.CREATURE,
-        is_herb=False,
         elements=EV.from_dict({"magic": 4}),
         habitats=["Океан", "Арктика"],
         description="Текст",

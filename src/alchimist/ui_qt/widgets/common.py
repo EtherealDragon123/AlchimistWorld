@@ -17,7 +17,14 @@ from PySide6.QtWidgets import (
 )
 
 from alchimist.core.errors import Message, Severity
-from alchimist.core.models import coerce_enum
+from alchimist.core.models import (
+    BASE_NAMES_RU,
+    BASE_ORDER,
+    BaseKey,
+    BaseType,
+    Ingredient,
+    coerce_enum,
+)
 from alchimist.i18n import _, describe
 from alchimist.ui_qt.theme import error_color, muted_color, on_theme_changed, warning_color
 
@@ -261,3 +268,27 @@ def hint_label(text: str = "") -> QLabel:
     label.setObjectName("hint")
     label.setWordWrap(True)
     return label
+
+
+# ── основы: обычные и особые (П-4.4) ─────────────────────────────────────────
+def base_text(app, base: BaseKey | None) -> str:
+    """Подпись основы: «Жидкая» или название особой основы."""
+    if base is None or base == "":
+        return "—"
+    kind = coerce_enum(BaseType, base)
+    if kind is not None:
+        return BASE_NAMES_RU[kind]
+    return app.catalog.base_names().get(str(base), str(base))
+
+
+def fill_base_combo(combo: QComboBox, current: BaseKey | None, specials: list[Ingredient]) -> None:
+    """Три типа основы и особые основы из сумки; выбор сохраняется, сигналы молчат."""
+    combo.blockSignals(True)
+    combo.clear()
+    for kind in BASE_ORDER:
+        combo.addItem(BASE_NAMES_RU[kind], kind)
+    for ingredient in specials:
+        combo.addItem(_("{name} (особая основа)").format(name=ingredient.name), ingredient.id)
+    index = combo.findData(current) if current is not None else -1
+    combo.setCurrentIndex(max(0, index))
+    combo.blockSignals(False)

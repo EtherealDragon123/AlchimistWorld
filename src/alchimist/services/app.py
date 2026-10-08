@@ -75,10 +75,14 @@ class AppService:
         ]
 
     def can_delete_ingredient(self, ingredient_id: str) -> bool:
-        """FR-1.5: удалять можно только то, чего нет ни в инвентаре, ни в журнале."""
+        """FR-1.5: удалять можно только то, чего нет ни в инвентаре, ни в журнале.
+
+        Особую основу, которую требует рецепт, тоже нельзя: рецепт остался бы без основы.
+        """
         return not (
             self.inventory.is_ingredient_used(ingredient_id)
             or self.journal.uses_ingredient(ingredient_id)
+            or self.catalog.is_required_base(ingredient_id)
         )
 
     def can_delete_potion(self, potion_id: str) -> bool:

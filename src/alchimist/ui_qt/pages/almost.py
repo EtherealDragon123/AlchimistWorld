@@ -13,11 +13,11 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from alchimist.core.models import BASE_NAMES_RU, RARITY_NAMES_RU
+from alchimist.core.models import RARITY_NAMES_RU
 from alchimist.i18n import _
 from alchimist.ui_qt.pages.base import Page
 from alchimist.ui_qt.theme import bold, muted_color, warning_color
-from alchimist.ui_qt.widgets.common import SearchBox, hint_label, page_heading
+from alchimist.ui_qt.widgets.common import SearchBox, base_text, hint_label, page_heading
 from alchimist.ui_qt.widgets.element_badge import rarity_icon
 
 
@@ -92,13 +92,19 @@ class AlmostPage(Page):
                 f"{p.ingredient.name}×{p.count}" if p.count > 1 else p.ingredient.name
                 for p in row.have.picks
             ) or _("пока ничего")
+            # Нехватающая особая основа (П-4.4) — отдельной строкой рядом с элементами.
+            missing = [row.missing.format_ru()] if row.missing else []
+            if row.missing_base:
+                missing.insert(0, _("основа «{name}»").format(name=base_text(self.app, row.base)))
+            if row.base_ingredient is not None:
+                where = _("на основе «{name}»").format(name=row.base_ingredient.name)
+            else:
+                where = _("{base} основа").format(base=base_text(self.app, row.base).lower())
             item = QTreeWidgetItem(
                 [
                     row.potion.name,
-                    row.missing.format_ru(),
-                    _("есть: {have}   ({base} основа)").format(
-                        have=have, base=BASE_NAMES_RU[row.base].lower()
-                    ),
+                    ", ".join(missing),
+                    _("есть: {have}   ({where})").format(have=have, where=where),
                 ]
             )
             item.setIcon(0, rarity_icon(row.potion.rarity))

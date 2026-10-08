@@ -86,13 +86,13 @@ def test_ingredient_dialog_live_warning(ui_app, qapp) -> None:
     assert built.elements.to_dict() == {"earth": 3}
 
 
-def test_ingredient_dialog_herb_flag_follows_category(ui_app, qapp) -> None:
+def test_ingredient_dialog_has_no_herb_flag(ui_app, qapp) -> None:
+    """Травник работает по категории «Растение» (П-6.3): отдельной галочки нет."""
     dialog = IngredientDialog(ui_app, None)
-    categories = list(IngredientCategory)
-    dialog.category.setCurrentIndex(categories.index(IngredientCategory.ESSENCE))
-    assert not dialog.is_herb.isChecked()
-    dialog.category.setCurrentIndex(categories.index(IngredientCategory.PLANT))
-    assert dialog.is_herb.isChecked()
+    assert not hasattr(dialog, "is_herb")
+    assert dialog.build().category is IngredientCategory.PLANT  # новый реагент — растение
+    categories = [dialog.category.itemData(i) for i in range(dialog.category.count())]
+    assert "herb" not in categories and IngredientCategory.BASE in categories
 
 
 def test_ingredient_dialog_loads_existing(ui_app, qapp) -> None:

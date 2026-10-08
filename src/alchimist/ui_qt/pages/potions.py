@@ -203,7 +203,7 @@ class MyPotionsPage(Page):
             return
         potion = self.app.catalog.potion(potion_id)
         recipe = (
-            f"{potion.recipe.format_bases_ru()} · {potion.recipe.elements.format_ru()}"
+            f"{self.app.catalog.bases_text(potion.recipe)} · {potion.recipe.elements.format_ru()}"
             if potion.recipe
             else _("неизвестен")
         )

@@ -10,6 +10,7 @@ from alchimist.core.models import (
     ALL_BASES,
     BASE_NAMES_RU,
     BASE_ORDER,
+    BaseKey,
     BaseType,
     Ingredient,
     Kit,
@@ -147,16 +148,22 @@ class BrewOption:
     bases: frozenset[BaseType]
     combination: Combination
     kit: Kit
+    #: Особая основа, которую требует рецепт (П-4.4); тогда `bases` пустой.
+    base_ingredient: Ingredient | None = None
 
     @property
-    def base(self) -> BaseType:
-        """Основа по умолчанию — первая в каноническом порядке."""
+    def base(self) -> BaseKey:
+        """Основа по умолчанию — особая, если её требует рецепт, иначе первая по порядку."""
+        if self.base_ingredient is not None:
+            return self.base_ingredient.id
         return self.sorted_bases()[0]
 
     def sorted_bases(self) -> list[BaseType]:
         return [b for b in BASE_ORDER if b in self.bases]
 
     def format_bases_ru(self) -> str:
+        if self.base_ingredient is not None:
+            return self.base_ingredient.name
         if self.bases == ALL_BASES:
             return "Любая"
         return " или ".join(BASE_NAMES_RU[b].lower() for b in self.sorted_bases()).capitalize()
@@ -219,15 +226,19 @@ class AlmostReady:
     """Строка экрана «Почти готово» (FR-6.1–6.3)."""
 
     potion: Potion
-    base: BaseType
+    base: BaseKey
     kit: Kit
     have: Combination
     missing: ElementVector
     fillers: tuple[Filler, ...] = ()
+    #: Особая основа рецепта (П-4.4) и есть ли её нехватка: тогда в строке «нужна основа».
+    base_ingredient: Ingredient | None = None
+    missing_base: bool = False
 
     @property
     def missing_units(self) -> int:
-        return self.missing.total
+        """Недостача в единицах; нехватающая особая основа считается за одну."""
+        return self.missing.total + (1 if self.missing_base else 0)
 
 
 # ── §5.1 Точные комбинации ────────────────────────────────────────────────────
@@ -604,6 +615,18 @@ def _stock_for_kit(stock: Sequence[StockItem], kit: Kit) -> list[StockItem]:
     return [s for s in stock if kit_allows_ingredient(kit, s.ingredient)]
 
 
+def _without_one(stock: Sequence[StockItem], ingredient_id: str) -> list[StockItem]:
+    """Запас минус одна штука: столько уходит на особую основу (одна на варку)."""
+    left: list[StockItem] = []
+    for item in stock:
+        if item.ingredient.id == ingredient_id:
+            if item.qty > 1:
+                left.append(StockItem(item.ingredient, item.qty - 1))
+            continue
+        left.append(item)
+    return left
+
+
 def _available(stock: Sequence[StockItem]) -> ElementVector:
     """Сколько всего единиц каждого элемента доступно — для верхней оценки порций."""
     total = ElementVector()
@@ -635,11 +658,18 @@ def brewable(
     per_kit_stock = {kit: _stock_for_kit(stock, kit) for kit in kits}
     per_kit_classes = {kit: build_classes(items) for kit, items in per_kit_stock.items()}
     per_kit_available = {kit: _available(items) for kit, items in per_kit_stock.items()}
+    in_stock = {item.ingredient.id: item for item in stock}
     result: list[BrewablePotion] = []
 
     for potion in potions:
         recipe = potion.recipe
         if recipe is None or potion.hidden:
+            continue
+        # Рецепт на особой основе варится только на ней (П-4.4): нет её в сумке —
+        # нечего и подбирать, зелье уйдёт в «Почти готово».
+        special = recipe.required_base_id
+        base_item = in_stock.get(special) if special else None
+        if special and base_item is None:
             continue
         # Один и тот же набор реагентов могут разрешать несколько наборов
         # инструментов, и основы у них разные (П-6.3). Вариант тут один, а основы
@@ -649,14 +679,23 @@ def brewable(
         for kit in kits:
             if not kit_allows_potion(kit, potion):
                 continue
-            bases = [b for b in recipe.sorted_bases() if kit_allows_base(kit, b)]
-            if not bases:
-                continue
+            if special:
+                # Основа занимает одну штуку: реагентом эта штука уже не будет.
+                bases: list[BaseType] = []
+                kit_stock = _without_one(per_kit_stock[kit], special)
+                classes = build_classes(kit_stock)
+                available = _available(kit_stock)
+            else:
+                bases = [b for b in recipe.sorted_bases() if kit_allows_base(kit, b)]
+                if not bases:
+                    continue
+                classes = per_kit_classes[kit]
+                available = per_kit_available[kit]
 
             # Если элементов не хватает даже при полном опустошении сумки, перебирать
             # нечего: ни один набор цель не покроет. Проверка стоит семь сравнений и
             # снимает основную часть работы — большинство рецептов просто недостижимы.
-            reachable = recipe.elements.max_repeats_in(per_kit_available[kit])
+            reachable = recipe.elements.max_repeats_in(available)
             if reachable <= 0:
                 continue
 
@@ -667,7 +706,7 @@ def brewable(
                     (),
                     limit=options_per_potion,
                     max_excess=max_excess,
-                    classes=per_kit_classes[kit],
+                    classes=classes,
                 )
                 for combo in found:
                     normalized = read_as_portions(combo, recipe.elements)
@@ -692,8 +731,9 @@ def brewable(
                     kit if len(bases) > len(known_bases) else known_kit,
                 )
 
+        base_ingredient = base_item.ingredient if base_item is not None else None
         options = [
-            BrewOption(potion, frozenset(bases), combo, kit)
+            BrewOption(potion, frozenset(bases), combo, kit, base_ingredient)
             for combo, bases, kit in merged.values()
         ]
         if options:
@@ -805,7 +845,10 @@ def almost_ready(
     """Известные рецепты, которые сейчас не сварить, и чего им не хватает (FR-6.1–6.3)."""
     kits = list(kits) or [Kit.ALCHEMIST]
     catalog_ingredients = list(catalog_ingredients)
-    per_kit_classes = {kit: build_classes(_stock_for_kit(stock, kit)) for kit in kits}
+    by_id = {i.id: i for i in catalog_ingredients}
+    per_kit_stock = {kit: _stock_for_kit(stock, kit) for kit in kits}
+    per_kit_classes = {kit: build_classes(items) for kit, items in per_kit_stock.items()}
+    in_stock = {item.ingredient.id for item in stock}
     skip = set(brewable_ids)
     rows: list[AlmostReady] = []
 
@@ -813,27 +856,49 @@ def almost_ready(
         recipe = potion.recipe
         if recipe is None or potion.hidden or potion.id in skip:
             continue
+        special = recipe.required_base_id
+        has_base = bool(special) and special in in_stock
         candidates: list[AlmostReady] = []
         for kit in kits:
             if not kit_allows_potion(kit, potion):
                 continue
-            bases = [b for b in recipe.sorted_bases() if kit_allows_base(kit, b)]
-            if not bases:
-                continue
-            have = best_subset(recipe.elements, (), classes=per_kit_classes[kit])
+            if special:
+                # Особая основа (П-4.4): если она есть, одна штука занята под основу.
+                base: BaseKey = special
+                classes = (
+                    build_classes(_without_one(per_kit_stock[kit], special))
+                    if has_base
+                    else per_kit_classes[kit]
+                )
+            else:
+                bases = [b for b in recipe.sorted_bases() if kit_allows_base(kit, b)]
+                if not bases:
+                    continue
+                base = bases[0]
+                classes = per_kit_classes[kit]
+            have = best_subset(recipe.elements, (), classes=classes)
             missing = (recipe.elements - have.elements).clamped()
-            if missing.is_empty:
+            missing_base = bool(special) and not has_base
+            if missing.is_empty and not missing_base:
                 continue  # это зелье уже варится, оно на другом экране
-            candidates.append(AlmostReady(potion, bases[0], kit, have, missing))
+            candidates.append(
+                AlmostReady(
+                    potion,
+                    base,
+                    kit,
+                    have,
+                    missing,
+                    base_ingredient=by_id.get(special) if special else None,
+                    missing_base=missing_base,
+                )
+            )
         if not candidates:
             continue
         best = min(candidates, key=lambda a: (a.missing_units, a.have.cost))
         if max_missing is not None and best.missing_units > max_missing:
             continue
-        fillers = find_fillers(best.missing, catalog_ingredients)
-        rows.append(
-            AlmostReady(best.potion, best.base, best.kit, best.have, best.missing, tuple(fillers))
-        )
+        fillers = find_fillers(best.missing, catalog_ingredients) if best.missing else []
+        rows.append(replace(best, fillers=tuple(fillers)))
 
     rows.sort(key=lambda a: (a.missing_units, a.potion.rarity, a.potion.name))
     return rows

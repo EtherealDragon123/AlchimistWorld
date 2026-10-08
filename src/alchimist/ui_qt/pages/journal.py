@@ -28,7 +28,13 @@ from alchimist.i18n import _, describe
 from alchimist.services.journal import JournalFilter
 from alchimist.ui_qt.pages.base import Page
 from alchimist.ui_qt.theme import error_color, muted_color
-from alchimist.ui_qt.widgets.common import FilterBar, SearchBox, hint_label, page_heading
+from alchimist.ui_qt.widgets.common import (
+    FilterBar,
+    SearchBox,
+    base_text,
+    hint_label,
+    page_heading,
+)
 from alchimist.ui_qt.widgets.element_counter import ElementCounters
 
 ANY = "__any__"
@@ -224,7 +230,7 @@ class JournalPage(Page):
                 columns = [
                     entry.ts.strftime("%Y-%m-%d %H:%M"),
                     TYPE_NAMES[entry.type],
-                    BASE_NAMES_RU[entry.base] if entry.base else "—",
+                    base_text(self.app, entry.base_key),
                     what,
                     entry.elements.format_ru(),
                     str(entry.difficulty) if entry.difficulty is not None else "—",

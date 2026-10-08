@@ -14,12 +14,14 @@ from dataclasses import dataclass, field, replace
 from alchimist.core.elements import ElementVector
 from alchimist.core.errors import AlchimistError, ErrorCode, Message
 from alchimist.core.models import (
+    BaseKey,
     BaseType,
     BrewQueue,
     Ingredient,
     Potion,
     QueueEntry,
     ReagentStack,
+    is_special_base_key,
 )
 from alchimist.core.rules import Difficulty, brew_difficulty
 from alchimist.services.events import EventBus, QueueChanged
@@ -103,19 +105,24 @@ class QueueService:
     def add(
         self,
         potion_id: str,
-        base: BaseType,
+        base: BaseKey,
         reagents: dict[str, int],
         portions: int = 1,
         note: str = "",
     ) -> QueueEntry:
-        """Ставит в очередь конкретную варку: эти реагенты, эта основа, столько порций."""
+        """Ставит в очередь конкретную варку: эти реагенты, эта основа, столько порций.
+
+        Особая основа (П-4.4) тоже резервируется: одна штука на запись.
+        """
         picked = {i: q for i, q in reagents.items() if q > 0}
         if not picked:
             raise AlchimistError(ErrorCode.NO_REAGENTS)
+        special = is_special_base_key(base)
         entry = QueueEntry(
             id=new_entry_id(),
             potion_id=potion_id,
-            base=base,
+            base=BaseType.LIQUID if special else base,
+            base_ingredient_id=str(base) if special else None,
             reagents=tuple(ReagentStack(i, q) for i, q in sorted(picked.items())),
             portions=max(1, portions),
             note=note,
@@ -198,7 +205,7 @@ class QueueService:
             potion = potions.get(entry.potion_id)
             if potion is None:
                 continue
-            needed = entry.reagent_map()
+            needed = entry.needs()
             missing = {i: qty - left.get(i, 0) for i, qty in needed.items() if left.get(i, 0) < qty}
             if not missing:
                 for ingredient_id, qty in needed.items():

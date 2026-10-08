@@ -10,9 +10,11 @@ from alchimist.core.elements import ElementVector
 from alchimist.core.errors import AlchimistError, ErrorCode, Message
 from alchimist.core.ids import normalize_name, unique_id
 from alchimist.core.models import (
-    BaseType,
+    BASE_ORDER,
+    BaseKey,
     Catalog,
     Ingredient,
+    IngredientCategory,
     Potion,
     Recipe,
 )
@@ -135,7 +137,7 @@ class CatalogService:
         """Все зелья, у которых в справочнике записан рецепт."""
         return frozenset(p.id for p in self._catalog.potions if p.recipe is not None)
 
-    def unlearned_exact(self, base: BaseType, elements: ElementVector) -> list[Potion]:
+    def unlearned_exact(self, base: BaseKey, elements: ElementVector) -> list[Potion]:
         """Неизученные рецепты, которые ровно совпадают с этой варкой (FR-14.7)."""
         known = self._known()
         if known is None:
@@ -144,6 +146,40 @@ class CatalogService:
         return sorted(
             (self.raw_potion(i) for i in ids if not self.raw_potion(i).hidden),
             key=lambda p: p.name.casefold(),
+        )
+
+    # ── особые основы (П-4.4) ─────────────────────────────────────────────
+    def special_bases(self, *, include_hidden: bool = False) -> list[Ingredient]:
+        """Реагенты категории «Основа»."""
+        return [
+            i
+            for i in self.ingredients(include_hidden=include_hidden)
+            if i.category is IngredientCategory.BASE
+        ]
+
+    def base_names(self) -> dict[str, str]:
+        """id особой основы → название: для подписей рецептов и предупреждений."""
+        return {
+            i.id: i.name for i in self._catalog.ingredients if i.category is IngredientCategory.BASE
+        }
+
+    def bases_text(self, recipe: Recipe) -> str:
+        """«Жидкая или вязкая», «Любая» или название особой основы."""
+        return recipe.format_bases_ru(self.base_names())
+
+    def recipes_requiring(self, ingredient_id: str) -> list[Potion]:
+        """Зелья, чей рецепт требует эту особую основу — среди известных персонажу."""
+        return [
+            p
+            for p in self.potions()
+            if p.recipe is not None and p.recipe.required_base_id == ingredient_id
+        ]
+
+    def is_required_base(self, ingredient_id: str) -> bool:
+        """Нужна ли основа хоть одному рецепту справочника (знает он о нём или нет)."""
+        return any(
+            p.recipe is not None and p.recipe.required_base_id == ingredient_id
+            for p in self._catalog.potions
         )
 
     def families(self) -> list[str]:
@@ -165,7 +201,7 @@ class CatalogService:
         if recipe is None:
             return []
         names = {p.id: p.name for p in self._catalog.potions}
-        return check_recipe(potion, recipe, self._index, names)
+        return check_recipe(potion, recipe, self._index, names, self.base_names())
 
     def potion_warnings(self, potion: Potion) -> list[Message]:
         return self.validate_recipe(potion, potion.recipe)
@@ -192,7 +228,9 @@ class CatalogService:
                 raise AlchimistError(ErrorCode.DUPLICATE_NAME, name=name, id=item.id)
 
     def new_ingredient_id(self, name: str) -> str:
-        return unique_id(name, {i.id for i in self._catalog.ingredients})
+        """Значения типов основ заняты: id особой основы с ними не должен совпадать (П-4.4)."""
+        taken = {i.id for i in self._catalog.ingredients} | {str(b.value) for b in BASE_ORDER}
+        return unique_id(name, taken)
 
     def new_potion_id(self, name: str) -> str:
         return unique_id(name, {p.id for p in self._catalog.potions})

@@ -14,6 +14,7 @@ from alchimist.core.models import Catalog, Ingredient, Potion, coerce_enum
 from alchimist.core.rules import check_catalog
 from alchimist.services.catalog import CatalogService
 from alchimist.storage.atomic import write_atomic
+from alchimist.storage.migrations import CURRENT_VERSIONS, migrate
 from alchimist.storage.serde import (
     dumps,
     ingredient_from_dict,
@@ -23,7 +24,7 @@ from alchimist.storage.serde import (
 )
 
 EXCHANGE_FORMAT = "alchimist-catalog"
-EXCHANGE_SCHEMA = 1
+EXCHANGE_SCHEMA = CURRENT_VERSIONS["catalog-export"]
 
 
 class MergeChoice(StrEnum):
@@ -109,7 +110,9 @@ class ExchangeService:
             ) from exc
         if not isinstance(data, dict) or data.get("format") != EXCHANGE_FORMAT:
             raise AlchimistError(ErrorCode.EXCHANGE_BAD_FORMAT, path=str(path))
-        return data
+        # Старый файл приводится к текущему виду (травы → растения), а слишком новый
+        # даёт понятную ошибку «формат новее, чем понимает приложение».
+        return migrate("catalog-export", data, source=None)
 
     def plan(self, path: Path) -> MergePlan:
         """Сравнение по `id` (03 §6.8): новое, одинаковое, расходящееся."""

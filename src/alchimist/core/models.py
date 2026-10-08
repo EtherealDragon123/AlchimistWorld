@@ -40,6 +40,23 @@ class BaseType(StrEnum):
 BASE_ORDER: tuple[BaseType, ...] = (BaseType.LIQUID, BaseType.VISCOUS, BaseType.EXPLOSIVE)
 ALL_BASES: frozenset[BaseType] = frozenset(BASE_ORDER)
 
+#: Основа варки: обычный тип или id особой основы (П-4.4). id особой основы никогда не
+#: совпадает со значением `BaseType` — такие id не выдаются (`CatalogService`).
+BaseKey = BaseType | str
+
+
+def is_special_base_key(base: BaseKey | None) -> bool:
+    """Особая основа — это строка-id, а не один из трёх типов."""
+    return base is not None and coerce_enum(BaseType, base) is None
+
+
+def as_base_key(base: object) -> BaseKey | None:
+    """Qt и JSON отдают строки: тип основы — в `BaseType`, остальное — id как есть."""
+    if base is None or base == "":
+        return None
+    return coerce_enum(BaseType, base) or str(base)
+
+
 BASE_NAMES_RU: dict[BaseType, str] = {
     BaseType.LIQUID: "Жидкая",
     BaseType.VISCOUS: "Вязкая",
@@ -55,27 +72,27 @@ BASE_NAMES_RU_LOC: dict[BaseType, str] = {
 
 
 class IngredientCategory(StrEnum):
-    """Категории реагентов (П-3.3)."""
+    """Категории реагентов (П-3.3).
 
-    HERB = "herb"
+    Отдельной «Травы» больше нет: травы — это растения, и набор травника работает
+    ровно с ними (П-6.3). Старые файлы с `herb` переводятся в `plant` миграцией.
+    """
+
     PLANT = "plant"
     ESSENCE = "essence"
     CREATURE = "creature"
+    #: Особая основа: основа в рецептах, которые требуют именно её, иначе реагент (П-4.4).
+    BASE = "base"
     OTHER = "other"
 
 
 CATEGORY_NAMES_RU: dict[IngredientCategory, str] = {
-    IngredientCategory.HERB: "Трава",
     IngredientCategory.PLANT: "Растение",
     IngredientCategory.ESSENCE: "Эссенция",
     IngredientCategory.CREATURE: "С существ",
+    IngredientCategory.BASE: "Основа",
     IngredientCategory.OTHER: "Прочее",
 }
-
-#: По умолчанию флаг «Травы» выставляется по категории (П-3.3), потом правится руками.
-HERB_CATEGORIES: frozenset[IngredientCategory] = frozenset(
-    {IngredientCategory.HERB, IngredientCategory.PLANT}
-)
 
 
 class PotionKind(StrEnum):
@@ -153,7 +170,6 @@ class Ingredient:
     name: str
     rarity: Rarity = Rarity.COMMON
     category: IngredientCategory = IngredientCategory.OTHER
-    is_herb: bool = False
     elements: ElementVector = field(default_factory=ElementVector)
     habitats: list[str] = field(default_factory=list)
     description: str = ""
@@ -164,40 +180,73 @@ class Ingredient:
         self.rarity = coerce_enum(Rarity, self.rarity, Rarity.COMMON)
         self.category = coerce_enum(IngredientCategory, self.category, IngredientCategory.OTHER)
 
+    @property
+    def is_plant(self) -> bool:
+        """Подходит набору травника (П-6.3)."""
+        return self.category is IngredientCategory.PLANT
+
+    @property
+    def is_special_base(self) -> bool:
+        """Особая основа (П-4.4)."""
+        return self.category is IngredientCategory.BASE
+
+    def expected_units(self) -> int:
+        """П-3.2: единиц столько, сколько уровень редкости; у особой основы на одну меньше."""
+        return int(self.rarity) - (1 if self.is_special_base else 0)
+
     def copy(self, **changes: object) -> Ingredient:
         return replace(self, **changes)  # type: ignore[arg-type]
 
 
 @dataclass(frozen=True, slots=True)
 class Recipe:
-    """Пара «допустимые основы + мультимножество элементов» (П-5.1)."""
+    """Пара «допустимые основы + мультимножество элементов» (П-5.1).
+
+    Рецепт на особой основе (П-4.4) варится только на ней: тогда `required_base_id`
+    задан, а `bases` пустой. Элементы самой основы в `elements` не входят.
+    """
 
     bases: frozenset[BaseType]
     elements: ElementVector
-    #: На будущее (П-4.4): рецепт требует конкретную основу.
+    #: Особая основа, которую требует рецепт (id реагента категории «Основа»).
     required_base_id: str | None = None
 
     def __post_init__(self) -> None:
         bases = frozenset(
             base for b in self.bases if (base := coerce_enum(BaseType, b)) is not None
         )
+        if self.required_base_id:
+            bases = frozenset()  # на особой основе — только на ней
         object.__setattr__(self, "bases", bases)
 
     @property
     def is_any_base(self) -> bool:
         return self.bases == ALL_BASES
 
+    @property
+    def needs_special_base(self) -> bool:
+        return bool(self.required_base_id)
+
     def sorted_bases(self) -> list[BaseType]:
         return [b for b in BASE_ORDER if b in self.bases]
 
-    def format_bases_ru(self) -> str:
+    def base_keys(self) -> list[BaseKey]:
+        """Все основы, на которых варится рецепт: типы по порядку или одна особая."""
+        if self.required_base_id:
+            return [self.required_base_id]
+        return list(self.sorted_bases())
+
+    def format_bases_ru(self, names: Mapping[str, str] | None = None) -> str:
+        """«Жидкая или вязкая», «Любая» или имя особой основы (из `names`, если есть)."""
+        if self.required_base_id:
+            return (names or {}).get(self.required_base_id, self.required_base_id)
         if self.is_any_base:
             return "Любая"
         return " или ".join(BASE_NAMES_RU[b].lower() for b in self.sorted_bases()).capitalize()
 
-    def index_keys(self) -> list[tuple[BaseType, ElementVector]]:
+    def index_keys(self) -> list[tuple[BaseKey, ElementVector]]:
         """Ключи индекса рецептов: рецепт с N основами занимает N ключей (03 §5.5)."""
-        return [(base, self.elements) for base in self.sorted_bases()]
+        return [(base, self.elements) for base in self.base_keys()]
 
 
 @dataclass(slots=True)
@@ -284,12 +333,26 @@ class QueueEntry:
     reagents: tuple[ReagentStack, ...] = ()
     portions: int = 1
     note: str = ""
+    #: Особая основа, на которой варится запись (П-4.4); тогда `base` не важен.
+    base_ingredient_id: str | None = None
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "base", coerce_enum(BaseType, self.base, BaseType.LIQUID))
 
+    @property
+    def base_key(self) -> BaseKey:
+        return self.base_ingredient_id or self.base
+
     def reagent_map(self) -> dict[str, int]:
+        """Реагенты котла — без особой основы: её элементы в сумму не идут."""
         return {s.ingredient_id: s.qty for s in self.reagents if s.qty > 0}
+
+    def needs(self) -> dict[str, int]:
+        """Всё, что запись занимает в сумке: реагенты и особая основа (одна на варку)."""
+        needed = self.reagent_map()
+        if self.base_ingredient_id:
+            needed[self.base_ingredient_id] = needed.get(self.base_ingredient_id, 0) + 1
+        return needed
 
 
 @dataclass(frozen=True, slots=True)
@@ -324,7 +387,7 @@ class BrewQueue:
         left = dict(have)
         result: list[bool] = []
         for entry in self.entries:
-            needed = entry.reagent_map()
+            needed = entry.needs()
             enough = all(left.get(i, 0) >= qty for i, qty in needed.items())
             result.append(enough)
             if enough:
@@ -340,7 +403,7 @@ class BrewQueue:
         for entry, enough in zip(self.entries, self.feasible(have), strict=True):
             if not enough:
                 continue
-            for ingredient_id, qty in entry.reagent_map().items():
+            for ingredient_id, qty in entry.needs().items():
                 taken[ingredient_id] = taken.get(ingredient_id, 0) + qty
         return taken
 
@@ -416,6 +479,8 @@ class JournalEntry:
     qty: int = 0
     note: str = ""
     undone: bool = False
+    #: Особая основа варки (П-4.4): списана из сумки, в `elements` не входит.
+    base_ingredient_id: str | None = None
 
     def __post_init__(self) -> None:
         object.__setattr__(
@@ -425,11 +490,16 @@ class JournalEntry:
         object.__setattr__(self, "outcome", coerce_enum(Outcome, self.outcome))
 
     @property
-    def combination_key(self) -> tuple[BaseType, ElementVector] | None:
+    def base_key(self) -> BaseKey | None:
+        return self.base_ingredient_id or self.base
+
+    @property
+    def combination_key(self) -> tuple[BaseKey, ElementVector] | None:
         """Ключ для подсказки «уже пробовали» (П-7.6)."""
-        if self.type is not JournalEntryType.BREW or self.base is None:
+        base = self.base_key
+        if self.type is not JournalEntryType.BREW or base is None:
             return None
-        return (self.base, self.elements)
+        return (base, self.elements)
 
 
 @dataclass(slots=True)

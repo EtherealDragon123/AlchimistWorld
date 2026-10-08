@@ -10,6 +10,7 @@ from datetime import date, datetime
 from alchimist.core.elements import ElementVector
 from alchimist.core.errors import AlchimistError, ErrorCode, Message
 from alchimist.core.models import (
+    BaseKey,
     BaseType,
     JournalEntry,
     JournalEntryType,
@@ -108,7 +109,7 @@ class JournalService:
             raise AlchimistError(ErrorCode.NOT_FOUND, id=entry_id)
         return found
 
-    def combination_history(self, base: BaseType, elements: ElementVector) -> list[JournalEntry]:
+    def combination_history(self, base: BaseKey, elements: ElementVector) -> list[JournalEntry]:
         """«Эту комбинацию уже пробовали» (П-7.6, FR-7.4)."""
         key = (base, elements)
         return [
@@ -116,8 +117,11 @@ class JournalService:
         ]
 
     def uses_ingredient(self, ingredient_id: str) -> bool:
+        """Реагент был в котле или служил особой основой варки (П-4.4)."""
         return any(
-            r.ingredient_id == ingredient_id for entry in self._entries for r in entry.reagents
+            entry.base_ingredient_id == ingredient_id
+            or any(r.ingredient_id == ingredient_id for r in entry.reagents)
+            for entry in self._entries
         )
 
     def uses_potion(self, potion_id: str) -> bool:

@@ -1,6 +1,6 @@
 {
   "format": "alchimist-catalog",
-  "schema_version": 1,
+  "schema_version": 2,
   "exported_at": "2026-10-08T11:17:33.063076+04:00",
   "exported_by": "Айн",
   "ingredients": [
@@ -9,7 +9,6 @@
       "name": "Ароматная Бегония",
       "rarity": 1,
       "category": "plant",
-      "is_herb": true,
       "elements": {
         "fire": 1
       },
@@ -25,7 +24,6 @@
       "name": "Авантюра Портного",
       "rarity": 1,
       "category": "plant",
-      "is_herb": true,
       "elements": {
         "dark": 1
       },
@@ -41,7 +39,6 @@
       "name": "Фанана",
       "rarity": 1,
       "category": "plant",
-      "is_herb": true,
       "elements": {
         "air": 1
       },
@@ -57,7 +54,6 @@
       "name": "Фосфорицирующая эссенция магии",
       "rarity": 1,
       "category": "essence",
-      "is_herb": false,
       "elements": {
         "magic": 1
       },
@@ -71,7 +67,6 @@
       "name": "Фосфорицирующая эссенция огня",
       "rarity": 1,
       "category": "essence",
-      "is_herb": false,
       "elements": {
         "fire": 1
       },
@@ -85,7 +80,6 @@
       "name": "Фосфорицирующая эссенция света",
       "rarity": 1,
       "category": "essence",
-      "is_herb": false,
       "elements": {
         "light": 1
       },
@@ -99,7 +93,6 @@
       "name": "Фосфорицирующая эссенция тьмы",
       "rarity": 1,
       "category": "essence",
-      "is_herb": false,
       "elements": {
         "dark": 1
       },
@@ -113,7 +106,6 @@
       "name": "Фосфорицирующая эссенция воды",
       "rarity": 1,
       "category": "essence",
-      "is_herb": false,
       "elements": {
         "water": 1
       },
@@ -127,7 +119,6 @@
       "name": "Фосфорицирующая эссенция воздуха",
       "rarity": 1,
       "category": "essence",
-      "is_herb": false,
       "elements": {
         "air": 1
       },
@@ -141,7 +132,6 @@
       "name": "Фосфорицирующая эссенция земли",
       "rarity": 1,
       "category": "essence",
-      "is_herb": false,
       "elements": {
         "earth": 1
       },
@@ -155,7 +145,6 @@
       "name": "Глуполилия",
       "rarity": 1,
       "category": "plant",
-      "is_herb": true,
       "elements": {
         "air": 1
       },
@@ -171,7 +160,6 @@
       "name": "Хитрость Шефа",
       "rarity": 1,
       "category": "plant",
-      "is_herb": true,
       "elements": {
         "dark": 1
       },
@@ -187,7 +175,6 @@
       "name": "Корень кавы",
       "rarity": 2,
       "category": "plant",
-      "is_herb": true,
       "elements": {
         "water": 1,
         "magic": 1
@@ -204,7 +191,6 @@
       "name": "Кровь дракочерепахи",
       "rarity": 3,
       "category": "creature",
-      "is_herb": false,
       "elements": {
         "fire": 1,
         "water": 2
@@ -221,7 +207,6 @@
       "name": "Кровь озерной карги",
       "rarity": 3,
       "category": "creature",
-      "is_herb": false,
       "elements": {
         "earth": 1,
         "dark": 1,
@@ -237,7 +222,6 @@
       "name": "Кровь умертвия",
       "rarity": 3,
       "category": "creature",
-      "is_herb": false,
       "elements": {
         "dark": 2,
         "magic": 1
@@ -252,7 +236,6 @@
       "name": "Ледяная лоза",
       "rarity": 2,
       "category": "plant",
-      "is_herb": true,
       "elements": {
         "water": 1,
         "magic": 1
@@ -271,7 +254,6 @@
       "name": "Мертвостой",
       "rarity": 1,
       "category": "plant",
-      "is_herb": true,
       "elements": {
         "water": 1
       },
@@ -287,7 +269,6 @@
       "name": "Могильная Лоза",
       "rarity": 1,
       "category": "plant",
-      "is_herb": true,
       "elements": {
         "dark": 1
       },
@@ -303,7 +284,6 @@
       "name": "Мыльная Трава",
       "rarity": 1,
       "category": "plant",
-      "is_herb": true,
       "elements": {
         "light": 1
       },
@@ -319,7 +299,6 @@
       "name": "Охотничья грязь",
       "rarity": 1,
       "category": "plant",
-      "is_herb": true,
       "elements": {
         "earth": 1
       },
@@ -335,7 +314,6 @@
       "name": "Парфюм Ухажера",
       "rarity": 1,
       "category": "plant",
-      "is_herb": true,
       "elements": {
         "fire": 1
       },
@@ -351,7 +329,6 @@
       "name": "Пастушье Мыло",
       "rarity": 1,
       "category": "plant",
-      "is_herb": true,
       "elements": {
         "water": 1
       },
@@ -367,7 +344,6 @@
       "name": "Подлуннух",
       "rarity": 1,
       "category": "plant",
-      "is_herb": true,
       "elements": {
         "dark": 1
       },
@@ -383,7 +359,6 @@
       "name": "Помидор-Убийца",
       "rarity": 1,
       "category": "plant",
-      "is_herb": true,
       "elements": {
         "air": 1
       },
@@ -401,7 +376,6 @@
       "name": "Птичье семя",
       "rarity": 1,
       "category": "plant",
-      "is_herb": true,
       "elements": {
         "earth": 1
       },
@@ -417,7 +391,6 @@
       "name": "Семя ночного пламени",
       "rarity": 3,
       "category": "plant",
-      "is_herb": true,
       "elements": {
         "fire": 1,
         "dark": 2
@@ -434,7 +407,6 @@
       "name": "Щёлкорех",
       "rarity": 1,
       "category": "plant",
-      "is_herb": true,
       "elements": {
         "fire": 1
       },
@@ -450,7 +422,6 @@
       "name": "Сияющая эссенция магии",
       "rarity": 5,
       "category": "essence",
-      "is_herb": false,
       "elements": {
         "magic": 5
       },
@@ -464,7 +435,6 @@
       "name": "Сияющая эссенция огня",
       "rarity": 5,
       "category": "essence",
-      "is_herb": false,
       "elements": {
         "fire": 5
       },
@@ -478,7 +448,6 @@
       "name": "Сияющая эссенция света",
       "rarity": 5,
       "category": "essence",
-      "is_herb": false,
       "elements": {
         "light": 5
       },
@@ -492,7 +461,6 @@
       "name": "Сияющая эссенция тьмы",
       "rarity": 5,
       "category": "essence",
-      "is_herb": false,
       "elements": {
         "dark": 5
       },
@@ -506,7 +474,6 @@
       "name": "Сияющая эссенция воды",
       "rarity": 5,
       "category": "essence",
-      "is_herb": false,
       "elements": {
         "water": 5
       },
@@ -520,7 +487,6 @@
       "name": "Сияющая эссенция воздуха",
       "rarity": 5,
       "category": "essence",
-      "is_herb": false,
       "elements": {
         "air": 5
       },
@@ -534,7 +500,6 @@
       "name": "Сияющая эссенция земли",
       "rarity": 5,
       "category": "essence",
-      "is_herb": false,
       "elements": {
         "earth": 5
       },
@@ -548,7 +513,6 @@
       "name": "Сок Стального Дерева",
       "rarity": 2,
       "category": "plant",
-      "is_herb": true,
       "elements": {
         "earth": 2
       },
@@ -564,7 +528,6 @@
       "name": "Солдатский долг",
       "rarity": 1,
       "category": "plant",
-      "is_herb": true,
       "elements": {
         "fire": 1
       },
@@ -580,7 +543,6 @@
       "name": "Сопли Тролля",
       "rarity": 1,
       "category": "plant",
-      "is_herb": true,
       "elements": {
         "water": 1
       },
@@ -598,7 +560,6 @@
       "name": "Стучащее Дерево",
       "rarity": 1,
       "category": "plant",
-      "is_herb": true,
       "elements": {
         "air": 1
       },
@@ -614,7 +575,6 @@
       "name": "Свечная Роза",
       "rarity": 1,
       "category": "plant",
-      "is_herb": true,
       "elements": {
         "light": 1
       },
@@ -630,7 +590,6 @@
       "name": "Сверкающая эссенция магии",
       "rarity": 3,
       "category": "essence",
-      "is_herb": false,
       "elements": {
         "magic": 3
       },
@@ -644,7 +603,6 @@
       "name": "Сверкающая эссенция огня",
       "rarity": 3,
       "category": "essence",
-      "is_herb": false,
       "elements": {
         "fire": 3
       },
@@ -658,7 +616,6 @@
       "name": "Сверкающая эссенция света",
       "rarity": 3,
       "category": "essence",
-      "is_herb": false,
       "elements": {
         "light": 3
       },
@@ -672,7 +629,6 @@
       "name": "Сверкающая эссенция тьмы",
       "rarity": 3,
       "category": "essence",
-      "is_herb": false,
       "elements": {
         "dark": 3
       },
@@ -686,7 +642,6 @@
       "name": "Сверкающая эссенция воды",
       "rarity": 3,
       "category": "essence",
-      "is_herb": false,
       "elements": {
         "water": 3
       },
@@ -700,7 +655,6 @@
       "name": "Сверкающая эссенция воздуха",
       "rarity": 3,
       "category": "essence",
-      "is_herb": false,
       "elements": {
         "air": 3
       },
@@ -714,7 +668,6 @@
       "name": "Сверкающая эссенция земли",
       "rarity": 3,
       "category": "essence",
-      "is_herb": false,
       "elements": {
         "earth": 3
       },
@@ -728,7 +681,6 @@
       "name": "Светящаяся эссенция магии",
       "rarity": 4,
       "category": "essence",
-      "is_herb": false,
       "elements": {
         "magic": 4
       },
@@ -742,7 +694,6 @@
       "name": "Светящаяся эссенция огня",
       "rarity": 4,
       "category": "essence",
-      "is_herb": false,
       "elements": {
         "fire": 4
       },
@@ -756,7 +707,6 @@
       "name": "Светящаяся эссенция света",
       "rarity": 4,
       "category": "essence",
-      "is_herb": false,
       "elements": {
         "light": 4
       },
@@ -770,7 +720,6 @@
       "name": "Светящаяся эссенция тьмы",
       "rarity": 4,
       "category": "essence",
-      "is_herb": false,
       "elements": {
         "dark": 4
       },
@@ -784,7 +733,6 @@
       "name": "Светящаяся эссенция воды",
       "rarity": 4,
       "category": "essence",
-      "is_herb": false,
       "elements": {
         "water": 4
       },
@@ -798,7 +746,6 @@
       "name": "Светящаяся эссенция воздуха",
       "rarity": 4,
       "category": "essence",
-      "is_herb": false,
       "elements": {
         "air": 4
       },
@@ -812,7 +759,6 @@
       "name": "Светящаяся эссенция земли",
       "rarity": 4,
       "category": "essence",
-      "is_herb": false,
       "elements": {
         "earth": 4
       },
@@ -826,7 +772,6 @@
       "name": "Тканевый лист",
       "rarity": 1,
       "category": "plant",
-      "is_herb": true,
       "elements": {
         "earth": 1
       },
@@ -842,7 +787,6 @@
       "name": "Тусклая эссенция магии",
       "rarity": 2,
       "category": "essence",
-      "is_herb": false,
       "elements": {
         "magic": 2
       },
@@ -856,7 +800,6 @@
       "name": "Тусклая эссенция огня",
       "rarity": 2,
       "category": "essence",
-      "is_herb": false,
       "elements": {
         "fire": 2
       },
@@ -870,7 +813,6 @@
       "name": "Тусклая эссенция света",
       "rarity": 2,
       "category": "essence",
-      "is_herb": false,
       "elements": {
         "light": 2
       },
@@ -884,7 +826,6 @@
       "name": "Тусклая эссенция тьмы",
       "rarity": 2,
       "category": "essence",
-      "is_herb": false,
       "elements": {
         "dark": 2
       },
@@ -898,7 +839,6 @@
       "name": "Тусклая эссенция воды",
       "rarity": 2,
       "category": "essence",
-      "is_herb": false,
       "elements": {
         "water": 2
       },
@@ -912,7 +852,6 @@
       "name": "Тусклая эссенция воздуха",
       "rarity": 2,
       "category": "essence",
-      "is_herb": false,
       "elements": {
         "air": 2
       },
@@ -926,7 +865,6 @@
       "name": "Тусклая эссенция земли",
       "rarity": 2,
       "category": "essence",
-      "is_herb": false,
       "elements": {
         "earth": 2
       },
@@ -940,7 +878,6 @@
       "name": "Волосы озерной карги",
       "rarity": 3,
       "category": "creature",
-      "is_herb": false,
       "elements": {
         "water": 1,
         "earth": 1,

@@ -70,7 +70,7 @@ _TEMPLATES: dict[str, str] = {
         "«{name}»: в рецепте {actual} единиц, а по редкости должно быть {expected} (П-5.2)"
     ),
     WarningCode.RECIPE_COLLISION: (
-        "«{name}»: такой рецепт на {base_ru} основе уже есть у {others_ru} (П-5.6)"
+        "«{name}»: такой рецепт {base_phrase} уже есть у {others_ru} (П-5.6)"
     ),
     WarningCode.RECIPE_NO_BASES: "«{name}»: в рецепте не выбрана ни одна основа",
     WarningCode.RECIPE_NO_ELEMENTS: "«{name}»: в рецепте не указано ни одного элемента",
@@ -81,7 +81,8 @@ _TEMPLATES: dict[str, str] = {
     ErrorCode.DUPLICATE_NAME: "Название «{name}» уже занято",
     ErrorCode.EMPTY_NAME: "Название не может быть пустым",
     ErrorCode.INGREDIENT_IN_USE: (
-        "«{name}» есть в инвентаре или журнале, удалить нельзя — можно скрыть"
+        "«{name}» есть в инвентаре, журнале или нужен рецепту как основа, удалить нельзя — "
+        "можно скрыть"
     ),
     ErrorCode.POTION_IN_USE: "«{name}» есть в инвентаре или журнале, удалить нельзя — можно скрыть",
     ErrorCode.NOT_FOUND: "Запись не найдена: {id}",
@@ -107,6 +108,7 @@ _TEMPLATES: dict[str, str] = {
     ErrorCode.NO_CHARACTER: "Сначала создайте персонажа",
     ErrorCode.LAST_CHARACTER: "Нельзя удалить единственного персонажа",
     ErrorCode.RECIPE_UNKNOWN: "Рецепт «{name}» пока не знает никто, изучать нечего",
+    ErrorCode.NO_SPECIAL_BASE: "В сумке нет основы «{name}»",
 }
 
 
@@ -122,8 +124,12 @@ def _decorate(params: dict) -> dict:
     if base:
         try:
             decorated["base_ru"] = BASE_NAMES_RU_LOC[BaseType(base)]
+            decorated["base_phrase"] = f"на {decorated['base_ru']} основе"
         except ValueError:
-            decorated["base_ru"] = str(base)
+            # Особая основа (П-4.4): падежа у названия нет, поэтому «на основе «…»».
+            special = params.get("base_name") or str(base)
+            decorated["base_ru"] = special
+            decorated["base_phrase"] = f"на основе «{special}»"
     for key, value in list(decorated.items()):
         if value is None:
             decorated[key] = "—"

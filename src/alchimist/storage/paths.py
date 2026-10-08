@@ -66,11 +66,6 @@ class Paths:
     def potions_file(self) -> Path:
         return self.catalog_dir / "potions.json"
 
-    @property
-    def bases_file(self) -> Path:
-        """На будущее: особые основы (П-4.4, FR-11.1)."""
-        return self.catalog_dir / "bases.json"
-
     # ── профиль персонажа ────────────────────────────────────────────────
     @property
     def profiles_dir(self) -> Path:

@@ -69,7 +69,6 @@ def ingredient_to_dict(item: Ingredient) -> dict[str, Any]:
         "name": item.name,
         "rarity": int(item.rarity),
         "category": str(item.category.value),
-        "is_herb": item.is_herb,
         "elements": item.elements.to_dict(),
         "habitats": list(item.habitats),
         "description": item.description,
@@ -90,7 +89,6 @@ def ingredient_from_dict(data: dict[str, Any], path: str = "") -> Ingredient:
                 IngredientCategory.OTHER,
                 path,
             ),
-            is_herb=bool(data.get("is_herb", False)),
             elements=ElementVector.from_dict(data.get("elements") or {}),
             habitats=[str(h) for h in data.get("habitats", [])],
             description=str(data.get("description", "")),
@@ -207,6 +205,7 @@ def queue_to_dict(queue: BrewQueue) -> dict[str, Any]:
                 ],
                 "portions": entry.portions,
                 "note": entry.note,
+                "base_ingredient": entry.base_ingredient_id,
             }
             for entry in queue.entries
         ],
@@ -226,6 +225,7 @@ def queue_from_dict(data: dict[str, Any], path: str = "") -> BrewQueue:
                 ),
                 portions=int(raw.get("portions", 1) or 1),
                 note=str(raw.get("note", "")),
+                base_ingredient_id=raw.get("base_ingredient") or None,
             )
             for raw in data.get("entries", [])
         )
@@ -243,6 +243,8 @@ def entry_to_dict(entry: JournalEntry) -> dict[str, Any]:
     }
     if entry.type is JournalEntryType.BREW:
         data["base"] = str(entry.base.value) if entry.base else None
+        # Особая основа (П-4.4) — отдельным ключом: в `reagents` её нет, в сумму она не шла.
+        data["base_ingredient"] = entry.base_ingredient_id
         data["reagents"] = [
             {"ingredient_id": r.ingredient_id, "qty": r.qty} for r in entry.reagents
         ]
@@ -315,6 +317,7 @@ def entry_from_dict(data: dict[str, Any], path: str = "") -> JournalEntry:
             qty=int(data.get("qty", 0)),
             note=str(data.get("note", "")),
             undone=bool(data.get("undone", False)),
+            base_ingredient_id=data.get("base_ingredient") or None,
         )
     except (KeyError, TypeError, ValueError) as exc:
         raise StorageError(ErrorCode.STORAGE_CORRUPT, path=path, reason=str(exc)) from exc

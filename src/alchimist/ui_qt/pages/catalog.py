@@ -67,7 +67,6 @@ class IngredientsTab(QWidget):
             "element", _("Элемент"), [(_("любой"), ANY)], enum_type=Element
         )
         self.habitat_filter = self.filters.add_combo("habitat", _("Место"), [(_("любое"), ANY)])
-        self.filters.add_check("herb", _("Только «Травы»"))
         self.hidden_check = self.filters.add_check("hidden", _("Показывать скрытые"))
         self.filters.add_stretch()
         self.filters.changed.connect(self.refresh)
@@ -134,7 +133,6 @@ class IngredientsTab(QWidget):
         category = self.filters.value("category")
         element = self.filters.value("element")
         habitat = self.filters.value("habitat")
-        herbs_only = self.filters.value("herb")
         gm = self.app.can_edit_catalog
         for button in self.gm_buttons:
             button.setVisible(gm)
@@ -155,8 +153,6 @@ class IngredientsTab(QWidget):
             if element != ANY and not ingredient.elements[element]:
                 continue
             if habitat != ANY and habitat not in ingredient.habitats:
-                continue
-            if herbs_only and not ingredient.is_herb:
                 continue
             item = QTreeWidgetItem(
                 [
@@ -195,9 +191,7 @@ class IngredientsTab(QWidget):
         parts = [
             f"<h3>{ingredient.name}</h3>",
             f"<p><i>{RARITY_NAMES_RU[ingredient.rarity]} · "
-            f"{CATEGORY_NAMES_RU[ingredient.category]}"
-            + (f" · {_('Травы')}" if ingredient.is_herb else "")
-            + "</i></p>",
+            f"{CATEGORY_NAMES_RU[ingredient.category]}" + "</i></p>",
             f"<p><b>{_('Элементы')}:</b> {ingredient.elements.format_ru()}</p>",
         ]
         if ingredient.habitats:
@@ -210,6 +204,22 @@ class IngredientsTab(QWidget):
             )
         if ingredient.description:
             parts.append(f"<p>{ingredient.description}</p>")
+
+        if ingredient.is_special_base:
+            # Особая основа (П-4.4): основой работает только там, где её требует рецепт.
+            needed_by = self.app.catalog.recipes_requiring(ingredient.id)
+            if needed_by:
+                names = ", ".join(p.name for p in needed_by)
+                parts.append(f"<p><b>{_('Основа для рецептов')}:</b> {names}</p>")
+            parts.append(
+                f"<p><i>{
+                    _(
+                        'Особая основа: основой служит только в рецептах, которые требуют '
+                        'именно её, и тогда её элементы в сумму не идут. В остальных '
+                        'варках — обычный реагент.'
+                    )
+                }</i></p>"
+            )
 
         recipes = self.app.brewing.recipes_using(ingredient)
         if recipes:
@@ -447,7 +457,8 @@ class PotionsTab(QWidget):
     def _recipe_text(self, potion) -> str:
         """У игрока «не изучен» — рецепт есть, но он его не знает; «неизвестен» — нет ни у кого."""
         if potion.recipe:
-            return f"{potion.recipe.format_bases_ru()} · {potion.recipe.elements.format_ru()}"
+            bases = self.app.catalog.bases_text(potion.recipe)
+            return f"{bases} · {potion.recipe.elements.format_ru()}"
         if self.app.catalog.has_recipe(potion.id):
             return _("не изучен")
         return _("неизвестен")
@@ -477,7 +488,7 @@ class PotionsTab(QWidget):
         ]
         if potion.recipe:
             parts.append(
-                f"<p><b>{_('Рецепт')}:</b> {potion.recipe.format_bases_ru()} · "
+                f"<p><b>{_('Рецепт')}:</b> {self.app.catalog.bases_text(potion.recipe)} · "
                 f"{potion.recipe.elements.format_ru()}</p>"
             )
         elif self.app.catalog.has_recipe(potion.id):

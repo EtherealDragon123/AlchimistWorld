@@ -37,7 +37,6 @@ def _dataset() -> tuple[list[Ingredient], list[Potion], list[StockItem]]:
                 name=f"Реагент {i}",
                 rarity=rarity,
                 category=rng.choice(list(IngredientCategory)),
-                is_herb=rng.random() < 0.4,
                 elements=_random_vector(rng, int(rarity)),
             )
         )
