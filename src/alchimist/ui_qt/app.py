@@ -55,7 +55,10 @@ def main(argv: list[str] | None = None) -> int:
         QMessageBox.critical(None, "AlchimistWorld", describe(exc.message))
         return 1
 
-    language = set_language(services.settings.settings.language)
+    # Перевода пока нет (FR-11.4), и выбора языка в интерфейсе тоже: язык берётся из
+    # ALCHIMIST_LANG, иначе русский. Сохранённый в settings.toml не применяется — у того,
+    # кто успел выбрать English, кнопки Qt остались бы английскими без способа вернуть.
+    language = set_language()
     app.setProperty("qt_translators", _install_qt_translations(app, language))
     apply_theme(app, services.settings.theme)
 

@@ -1,4 +1,4 @@
-"""Страница «Настройки»: наборы, язык, папка данных, импорт и экспорт (FR-9.x, FR-10.x)."""
+"""Страница «Настройки»: наборы, тема, папка данных, импорт и экспорт (FR-9.x, FR-10.x)."""
 
 from __future__ import annotations
 
@@ -25,7 +25,7 @@ from PySide6.QtWidgets import (
 
 from alchimist.core.errors import AlchimistError
 from alchimist.core.models import KIT_NAMES_RU, THEME_NAMES_RU, Kit, Theme
-from alchimist.i18n import AVAILABLE_LANGUAGES, _, describe
+from alchimist.i18n import _, describe
 from alchimist.ui_qt.dialogs.merge_dialog import MergeDialog
 from alchimist.ui_qt.pages.base import Page
 from alchimist.ui_qt.widgets.common import hint_label, page_heading
@@ -56,7 +56,7 @@ class SettingsPage(Page):
             )
         )
 
-        # ── персонаж и язык ───────────────────────────────────────────────
+        # ── персонаж и тема ───────────────────────────────────────────────
         profile_box = QGroupBox(_("Персонаж"))
         profile_form = QFormLayout(profile_box)
         self.character = QLineEdit()
@@ -67,12 +67,8 @@ class SettingsPage(Page):
             self.theme.addItem(THEME_NAMES_RU[theme], theme)
         self.theme.currentIndexChanged.connect(self._save_theme)
         profile_form.addRow(_("Тема оформления"), self.theme)
-        self.language = QComboBox()
-        for code, name in AVAILABLE_LANGUAGES.items():
-            self.language.addItem(name, code)
-        self.language.currentIndexChanged.connect(self._save_language)
-        profile_form.addRow(_("Язык интерфейса"), self.language)
-        profile_form.addRow("", hint_label(_("Язык применится после перезапуска приложения.")))
+        # Выбор языка вернётся вместе с переводом (FR-9.3, FR-11.4): пока английский
+        # каталог пуст, и пункт «English» только вводил бы в заблуждение.
 
         # ── папка данных (FR-9.4) ─────────────────────────────────────────
         data_box = QGroupBox(_("Данные"))
@@ -140,8 +136,6 @@ class SettingsPage(Page):
         self.character.setText(settings.character_name)
         index = self.theme.findData(settings.theme)
         self.theme.setCurrentIndex(max(0, index))
-        index = self.language.findData(settings.language)
-        self.language.setCurrentIndex(max(0, index))
         self.data_path.setText(_("Папка данных: {path}").format(path=self.app.paths.root))
         self.settings_path.setText(_("Настройки: {path}").format(path=self.app.paths.settings_file))
         catalog = self.app.catalog.catalog
@@ -166,10 +160,6 @@ class SettingsPage(Page):
     def _save_character(self) -> None:
         if not self._loading:
             self.app.settings.set_character_name(self.character.text().strip())
-
-    def _save_language(self) -> None:
-        if not self._loading:
-            self.app.settings.set_language(self.language.currentData())
 
     def _save_theme(self) -> None:
         """Тема применяется сразу и запоминается в settings.toml (FR-9.5)."""

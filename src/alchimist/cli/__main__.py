@@ -195,12 +195,9 @@ def cmd_settings(args: argparse.Namespace) -> int:
     if args.kits:
         kits = tuple(Kit(k) for k in args.kits)
         app.settings.set_kits(kits)
-    if args.language:
-        app.settings.set_language(args.language)
     if args.character:
         app.settings.set_character_name(args.character)
     settings = app.settings.settings
-    print(f"Язык: {settings.language}")
     print(f"Наборы: {', '.join(KIT_NAMES_RU[k] for k in settings.kits)}")
     print(f"Персонаж: {settings.character_name or '—'}")
     print(f"Профиль: {settings.active_profile}")
@@ -259,7 +256,6 @@ def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="alchimist", description=_("Помощник по алхимии для D&D"))
     parser.add_argument("--data", help="папка данных (иначе стандартная для ОС)")
     parser.add_argument("--profile", help="профиль персонажа")
-    parser.add_argument("--lang", help="язык сообщений")
     sub = parser.add_subparsers(dest="command", required=True)
 
     p = sub.add_parser("catalog", help="показать справочник")
@@ -286,7 +282,6 @@ def build_parser() -> argparse.ArgumentParser:
 
     p = sub.add_parser("settings", help="настройки (FR-9.x)")
     p.add_argument("--kits", nargs="*", choices=[k.value for k in Kit])
-    p.add_argument("--language")
     p.add_argument("--character")
     p.set_defaults(func=cmd_settings)
 
@@ -311,7 +306,7 @@ def build_parser() -> argparse.ArgumentParser:
 def main(argv: list[str] | None = None) -> int:
     parser = build_parser()
     args = parser.parse_args(argv)
-    set_language(args.lang)
+    set_language()  # перевода пока нет: ALCHIMIST_LANG или русский (FR-11.4)
     try:
         return args.func(args)
     except AlchimistError as exc:
