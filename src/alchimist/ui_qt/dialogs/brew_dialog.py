@@ -113,6 +113,8 @@ class BrewDialog(QDialog):
         self.create_potion = QPushButton(_("Создать…"))
         self.create_potion.setToolTip(_("Завести новое зелье в справочнике"))
         self.create_potion.clicked.connect(self._create_potion)
+        # Новое зелье — запись в справочнике: заводит только GM (FR-14.6).
+        self.create_potion.setVisible(app.can_edit_catalog)
 
         self.portions = QSpinBox()
         self.portions.setRange(1, 99)
@@ -236,7 +238,7 @@ class BrewDialog(QDialog):
             lines.append(
                 _("Эту комбинацию уже пробовали: {result}").format(result=_outcome_text(last))
             )
-        if self.app.settings.kits and not hint.allowed_kits:
+        if self.app.characters.kits and not hint.allowed_kits:
             lines.append(
                 f'<span style="color:{warning_color().name()}">'
                 + _("Выбранные наборы такую варку не разрешают (П-6.3)")
@@ -338,12 +340,45 @@ class BrewDialog(QDialog):
         )
 
     def _confirm(self) -> None:
+        request = self.request()
         try:
-            self.outcome = self.app.brewing.brew(self.request())
+            self.outcome = self.app.brewing.brew(request)
         except AlchimistError as exc:
             QMessageBox.warning(self, _("Не получилось"), describe(exc.message))
             return
+        if request.outcome is Outcome.SUCCESS:
+            self._offer_discovered()
         self.accept()
+
+    def _offer_discovered(self) -> None:
+        """FR-14.7: удачная варка ровно по неизученному рецепту — повод его изучить.
+
+        «Ровно» — та же основа и та же сумма элементов, без лишнего и без порций
+        сверх одной. Совпадение с лишними эссенциями рецепт не раскрывает.
+        """
+        key = self.outcome.entry.combination_key if self.outcome else None
+        if key is None:
+            return
+        base = coerce_enum(BaseType, key[0])
+        for potion in self.app.catalog.unlearned_exact(base, key[1]):
+            recipe = potion.recipe
+            answer = QMessageBox.question(
+                self,
+                _("Открыт рецепт"),
+                _(
+                    "Сумма элементов в точности совпала с рецептом «{name}»: "
+                    "{bases} · {elements}.\n\nИзучить этот рецепт?"
+                ).format(
+                    name=potion.name,
+                    bases=recipe.format_bases_ru(),
+                    elements=recipe.elements.format_ru(),
+                ),
+            )
+            if answer == QMessageBox.StandardButton.Yes:
+                try:
+                    self.app.learn_recipe(potion.id)
+                except AlchimistError as exc:
+                    QMessageBox.warning(self, _("Не получилось"), describe(exc.message))
 
 
 def _outcome_text(entry) -> str:

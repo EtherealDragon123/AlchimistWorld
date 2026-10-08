@@ -172,6 +172,8 @@ class JournalPage(Page):
 
     def refresh(self) -> None:
         super().refresh()
+        # Записать рецепт в справочник — правка справочника, это может только GM (FR-14.6).
+        self.save_recipe_button.setVisible(self.app.can_edit_catalog)
         potions = self.app.catalog.potion_map()
         ingredients = self.app.catalog.ingredient_map()
 
@@ -302,7 +304,7 @@ class JournalPage(Page):
             )
             return
         try:
-            potion, messages = self.app.brewing.save_as_recipe(entry.id)
+            potion, messages = self.app.save_as_recipe(entry.id)
         except AlchimistError as exc:
             QMessageBox.warning(self, _("Не получилось"), describe(exc.message))
             return

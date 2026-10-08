@@ -78,6 +78,8 @@ a = Analysis(
         (str(SRC / "alchimist" / "i18n" / "locale"), "alchimist/i18n/locale"),
         # Значок окна и панели задач.
         (str(SRC / "alchimist" / "ui_qt" / "resources"), "alchimist/ui_qt/resources"),
+        # Встроенный справочник: им заполняется справочник нового персонажа (FR-14.2).
+        (str(SRC / "alchimist" / "data" / "alchimist-catalog.json"), "alchimist/data"),
     ],
     # Окно и страницы подключаются по строке внутри main(), сам PyInstaller их не видит.
     hiddenimports=["alchimist.ui_qt.main_window"],

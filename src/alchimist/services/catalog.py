@@ -2,13 +2,15 @@
 
 from __future__ import annotations
 
-from collections.abc import Iterable
+from collections.abc import Callable, Iterable
 from dataclasses import dataclass, field
 from datetime import datetime
 
+from alchimist.core.elements import ElementVector
 from alchimist.core.errors import AlchimistError, ErrorCode, Message
 from alchimist.core.ids import normalize_name, unique_id
 from alchimist.core.models import (
+    BaseType,
     Catalog,
     Ingredient,
     Potion,
@@ -38,6 +40,11 @@ class CatalogService:
 
     repo: CatalogRepository
     bus: EventBus
+    #: Какие рецепты знает активный персонаж; None — все (GM или персонажа нет).
+    #: Чтение зелий через `potions()`, `potion()` и `potion_map()` показывает только
+    #: их: у неизученного рецепт скрыт, и подбор его не видит (FR-14.3, FR-14.8).
+    #: Сам справочник целиком — в `catalog`: им пользуются обмен и правка GM.
+    known_recipes: Callable[[], frozenset[str] | None] | None = None
     _catalog: Catalog = field(default_factory=Catalog)
     _index: dict[RecipeKey, set[str]] = field(default_factory=dict)
     _notices: list[Message] = field(default_factory=list)
@@ -77,13 +84,17 @@ class CatalogService:
         items = self._catalog.potions
         if not include_hidden:
             items = [p for p in items if not p.hidden]
-        return sorted(items, key=lambda p: (p.rarity, p.name.casefold()))
+        known = self._known()
+        return sorted(
+            (self._view(p, known) for p in items), key=lambda p: (p.rarity, p.name.casefold())
+        )
 
     def ingredient_map(self) -> dict[str, Ingredient]:
         return {i.id: i for i in self._catalog.ingredients}
 
     def potion_map(self) -> dict[str, Potion]:
-        return {p.id: p for p in self._catalog.potions}
+        known = self._known()
+        return {p.id: self._view(p, known) for p in self._catalog.potions}
 
     def ingredient(self, ingredient_id: str) -> Ingredient:
         item = self._catalog.ingredient_by_id(ingredient_id)
@@ -92,10 +103,48 @@ class CatalogService:
         return item
 
     def potion(self, potion_id: str) -> Potion:
+        return self._view(self.raw_potion(potion_id), self._known())
+
+    def raw_potion(self, potion_id: str) -> Potion:
+        """Зелье как есть, с рецептом, даже если персонаж его не изучил."""
         item = self._catalog.potion_by_id(potion_id)
         if item is None:
             raise AlchimistError(ErrorCode.NOT_FOUND, id=potion_id)
         return item
+
+    # ── знание рецептов (FR-14.3) ─────────────────────────────────────────
+    def _known(self) -> frozenset[str] | None:
+        return self.known_recipes() if self.known_recipes is not None else None
+
+    @staticmethod
+    def _view(potion: Potion, known: frozenset[str] | None) -> Potion:
+        """Неизученный рецепт выглядит как неизвестный: подбор его не видит.
+
+        Примечание к рецепту прячется вместе с ним — там бывают подсказки. У зелья
+        без рецепта примечание общее для всех (Бармаглот) и остаётся на месте.
+        """
+        if known is None or potion.recipe is None or potion.id in known:
+            return potion
+        return potion.copy(recipe=None, recipe_note=None)
+
+    def has_recipe(self, potion_id: str) -> bool:
+        """Есть ли рецепт в самом справочнике: только такой и можно изучить."""
+        return self.raw_potion(potion_id).recipe is not None
+
+    def recipe_ids(self) -> frozenset[str]:
+        """Все зелья, у которых в справочнике записан рецепт."""
+        return frozenset(p.id for p in self._catalog.potions if p.recipe is not None)
+
+    def unlearned_exact(self, base: BaseType, elements: ElementVector) -> list[Potion]:
+        """Неизученные рецепты, которые ровно совпадают с этой варкой (FR-14.7)."""
+        known = self._known()
+        if known is None:
+            return []
+        ids = self._index.get((base, elements), set()) - known
+        return sorted(
+            (self.raw_potion(i) for i in ids if not self.raw_potion(i).hidden),
+            key=lambda p: p.name.casefold(),
+        )
 
     def families(self) -> list[str]:
         return sorted({p.family for p in self._catalog.potions if p.family})
@@ -211,11 +260,11 @@ class CatalogService:
 
     def set_recipe(self, potion_id: str, recipe: Recipe | None) -> tuple[Potion, list[Message]]:
         """Ввод или изменение рецепта (FR-2.4). Проверка П-5.6 — в результате."""
-        potion = self.potion(potion_id)
+        potion = self.raw_potion(potion_id)
         return self.update_potion(potion.copy(recipe=recipe))
 
     def delete_potion(self, potion_id: str, *, used: bool = False) -> None:
-        item = self.potion(potion_id)
+        item = self.raw_potion(potion_id)
         if used:
             raise AlchimistError(ErrorCode.POTION_IN_USE, name=item.name, id=item.id)
         self._catalog.potions = [p for p in self._catalog.potions if p.id != potion_id]
@@ -224,7 +273,7 @@ class CatalogService:
         self.bus.publish(CatalogChanged(potion_ids=(potion_id,)))
 
     def set_potion_hidden(self, potion_id: str, hidden: bool) -> Potion:
-        item, _ = self.update_potion(self.potion(potion_id).copy(hidden=hidden))
+        item, _ = self.update_potion(self.raw_potion(potion_id).copy(hidden=hidden))
         return item
 
     # ── массовая замена (импорт) ──────────────────────────────────────────

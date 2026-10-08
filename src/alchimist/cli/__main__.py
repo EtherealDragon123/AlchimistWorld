@@ -7,7 +7,7 @@ import sys
 from pathlib import Path
 
 from alchimist.core.elements import ELEMENT_NAMES_RU
-from alchimist.core.errors import AlchimistError, Severity
+from alchimist.core.errors import AlchimistError, ErrorCode, Severity
 from alchimist.core.models import (
     BASE_NAMES_RU,
     CATEGORY_NAMES_RU,
@@ -47,11 +47,12 @@ def cmd_catalog(args: argparse.Namespace) -> int:
             )
     else:
         for item in app.catalog.potions():
-            recipe = (
-                f"{item.recipe.format_bases_ru()} · {item.recipe.elements.format_ru()}"
-                if item.recipe
-                else "рецепт неизвестен"
-            )
+            if item.recipe:
+                recipe = f"{item.recipe.format_bases_ru()} · {item.recipe.elements.format_ru()}"
+            elif app.catalog.has_recipe(item.id):
+                recipe = "рецепт не изучен"
+            else:
+                recipe = "рецепт неизвестен"
             print(
                 f"{item.name:44} {RARITY_NAMES_RU[item.rarity]:12} "
                 f"{KIND_NAMES_RU[item.kind]:7} {recipe}"
@@ -74,6 +75,22 @@ def _find_ingredient(app: AppService, needle: str):
     if not partial:
         raise SystemExit(f"Реагент не найден: {needle}")
     raise SystemExit("Подходит несколько: " + ", ".join(i.name for i in partial[:10]))
+
+
+def _find_potion(app: AppService, needle: str):
+    needle_folded = needle.casefold().replace("ё", "е")
+    items = app.catalog.potions()
+    exact = [
+        p for p in items if p.id == needle or p.name.casefold().replace("ё", "е") == needle_folded
+    ]
+    if exact:
+        return exact[0]
+    partial = [p for p in items if needle_folded in p.name.casefold().replace("ё", "е")]
+    if len(partial) == 1:
+        return partial[0]
+    if not partial:
+        raise SystemExit(f"Зелье не найдено: {needle}")
+    raise SystemExit("Подходит несколько: " + ", ".join(p.name for p in partial[:10]))
 
 
 def cmd_inv(args: argparse.Namespace) -> int:
@@ -101,7 +118,7 @@ def cmd_inv(args: argparse.Namespace) -> int:
 # ── подбор ────────────────────────────────────────────────────────────────────
 def cmd_can_brew(args: argparse.Namespace) -> int:
     app = _app(args)
-    kits = ", ".join(KIT_NAMES_RU[k] for k in app.settings.kits)
+    kits = ", ".join(KIT_NAMES_RU[k] for k in app.characters.kits)
     print(f"Наборы: {kits}\n")
     rows = app.brewing.can_brew()
     if not rows:
@@ -191,18 +208,76 @@ def cmd_journal(args: argparse.Namespace) -> int:
 
 
 def cmd_settings(args: argparse.Namespace) -> int:
+    """Наборы и имя — у активного персонажа (FR-14.5), остальное общее."""
     app = _app(args)
     if args.kits:
-        kits = tuple(Kit(k) for k in args.kits)
-        app.settings.set_kits(kits)
+        app.set_kits(Kit(k) for k in args.kits)
     if args.character:
-        app.settings.set_character_name(args.character)
-    settings = app.settings.settings
-    print(f"Наборы: {', '.join(KIT_NAMES_RU[k] for k in settings.kits)}")
-    print(f"Персонаж: {settings.character_name or '—'}")
-    print(f"Профиль: {settings.active_profile}")
+        active = app.characters.active
+        if active is None:
+            raise AlchimistError(ErrorCode.NO_CHARACTER)
+        app.rename_character(active.id, args.character)
+    active = app.characters.active
+    print(f"Персонаж: {active.name if active else '—'}")
+    print(f"Наборы: {', '.join(KIT_NAMES_RU[k] for k in app.characters.kits)}")
+    print(f"Профиль: {app.paths.profile}")
     print(f"Данные: {app.paths.root}")
     print(f"Настройки: {app.paths.settings_file}")
+    return 0
+
+
+# ── персонажи (FR-14.x) ───────────────────────────────────────────────────────
+def cmd_characters(args: argparse.Namespace) -> int:
+    app = _app(args)
+    active = app.characters.active
+    characters = app.characters.characters()
+    if not characters:
+        print("Персонажей пока нет: alchimist new-character ИМЯ")
+        return 0
+    total = len(app.catalog.recipe_ids())
+    for character in characters:
+        mark = "*" if active and character.id == active.id else " "
+        known = (
+            total if character.is_gm else len(character.known_recipes & app.catalog.recipe_ids())
+        )
+        kits = ", ".join(KIT_NAMES_RU[k] for k in character.kits)
+        print(f"{mark} {character.name:24} {character.id:16} рецептов {known}/{total}   {kits}")
+    return 0
+
+
+def cmd_new_character(args: argparse.Namespace) -> int:
+    app = _app(args)
+    kits = tuple(Kit(k) for k in args.kits or ())
+    character = app.create_character(args.name, kits)
+    print(f"Персонаж: {character.name} ({character.id}), теперь активный.")
+    return 0
+
+
+def cmd_switch(args: argparse.Namespace) -> int:
+    app = _app(args)
+    wanted = args.name.casefold()
+    found = [
+        c for c in app.characters.characters() if c.id == args.name or c.name.casefold() == wanted
+    ]
+    if not found:
+        raise SystemExit(f"Персонаж не найден: {args.name}")
+    character = app.switch_character(found[0].id)
+    print(f"Активный персонаж: {character.name}")
+    return 0
+
+
+def cmd_learn(args: argparse.Namespace) -> int:
+    """FR-14.3: изучить или забыть рецепт зелья."""
+    app = _app(args)
+    potion = _find_potion(app, args.name)
+    if args.forget:
+        app.forget_recipe(potion.id)
+        print(f"Рецепт забыт: {potion.name}")
+    else:
+        app.learn_recipe(potion.id)
+        recipe = app.catalog.potion(potion.id).recipe
+        text = f"{recipe.format_bases_ru()} · {recipe.elements.format_ru()}"
+        print(f"Рецепт изучен: {potion.name} — {text}")
     return 0
 
 
@@ -219,7 +294,7 @@ def cmd_check(args: argparse.Namespace) -> int:
 
 def cmd_export(args: argparse.Namespace) -> int:
     app = _app(args)
-    path = app.exchange.export(Path(args.path), app.settings.settings.character_name)
+    path = app.export_catalog(Path(args.path))
     print(f"Справочник выгружен: {path}")
     return 0
 
@@ -280,7 +355,24 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--limit", type=int, default=20)
     p.set_defaults(func=cmd_journal)
 
-    p = sub.add_parser("settings", help="настройки (FR-9.x)")
+    p = sub.add_parser("characters", help="список персонажей (FR-14.5)")
+    p.set_defaults(func=cmd_characters)
+
+    p = sub.add_parser("new-character", help="создать персонажа и переключиться на него")
+    p.add_argument("name", help="имя; имя GM добавляет мастера")
+    p.add_argument("--kits", nargs="*", choices=[k.value for k in Kit])
+    p.set_defaults(func=cmd_new_character)
+
+    p = sub.add_parser("switch", help="переключиться на другого персонажа")
+    p.add_argument("name", help="имя или id персонажа")
+    p.set_defaults(func=cmd_switch)
+
+    p = sub.add_parser("learn", help="изучить рецепт зелья (FR-14.3)")
+    p.add_argument("name", help="название зелья")
+    p.add_argument("--forget", action="store_true", help="наоборот, забыть")
+    p.set_defaults(func=cmd_learn)
+
+    p = sub.add_parser("settings", help="настройки активного персонажа (FR-9.x)")
     p.add_argument("--kits", nargs="*", choices=[k.value for k in Kit])
     p.add_argument("--character")
     p.set_defaults(func=cmd_settings)

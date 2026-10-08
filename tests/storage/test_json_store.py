@@ -180,16 +180,32 @@ def test_missing_files_give_empty_data(paths: Paths) -> None:
 
 
 def test_settings_roundtrip(paths: Paths) -> None:
-    from alchimist.core.models import Kit
+    from alchimist.core.models import Theme
 
     store = SettingsStore(paths)
     assert store.load() == Settings()
 
-    store.save(Settings(language="ru", kits=(Kit.HERBALIST, Kit.POISONER), character_name="Гримли"))
+    store.save(Settings(language="ru", theme=Theme.LIGHT, active_profile="grimli"))
     loaded = store.load()
-    assert loaded.kits == (Kit.HERBALIST, Kit.POISONER)
-    assert loaded.character_name == "Гримли"
-    assert 'kits = [\n    "herbalist",' in paths.settings_file.read_text(encoding="utf-8")
+    assert loaded.theme is Theme.LIGHT
+    assert loaded.active_profile == "grimli"
+
+
+def test_legacy_kits_and_name_are_read_but_not_written(paths: Paths) -> None:
+    """Наборы и имя переехали к персонажу (FR-14.5): старые читаются для переноса."""
+    from alchimist.core.models import Kit
+
+    paths.settings_file.write_text(
+        'kits = ["herbalist", "poisoner"]\ncharacter_name = "Гримли"\n', encoding="utf-8"
+    )
+    store = SettingsStore(paths)
+    loaded = store.load()
+    assert loaded.legacy_kits == (Kit.HERBALIST, Kit.POISONER)
+    assert loaded.legacy_character_name == "Гримли"
+
+    store.save(loaded)
+    text = paths.settings_file.read_text(encoding="utf-8")
+    assert "kits" not in text and "character_name" not in text
 
 
 def test_broken_settings_report_path(paths: Paths) -> None:

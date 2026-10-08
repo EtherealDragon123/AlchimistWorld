@@ -44,7 +44,18 @@ class QueueChanged(Event):
 
 @dataclass(frozen=True, slots=True)
 class SettingsChanged(Event):
-    """Поменялись настройки: наборы, язык, профиль."""
+    """Поменялись общие настройки: тема, язык."""
+
+
+@dataclass(frozen=True, slots=True)
+class CharacterChanged(Event):
+    """Поменялся персонаж: наборы, имя, изученные рецепты — или выбран другой.
+
+    `switched` — сменился сам персонаж: тогда у всех страниц другие инвентарь,
+    журнал и очередь, и перерисовать надо всё.
+    """
+
+    switched: bool = False
 
 
 Listener = Callable[[Event], None]

@@ -71,6 +71,16 @@ class ErrorCode(StrEnum):
     STORAGE_UNKNOWN_SCHEMA = "storage_unknown_schema"
     #: Файл обмена не того формата (FR-10.3).
     EXCHANGE_BAD_FORMAT = "exchange_bad_format"
+    #: Справочник меняет только GM (FR-14.6).
+    GM_ONLY = "gm_only"
+    #: Имя зарезервировано за GM: им нельзя назвать обычного персонажа (FR-14.6).
+    NAME_RESERVED = "name_reserved"
+    #: Действие требует персонажа, а он ещё не создан или не выбран.
+    NO_CHARACTER = "no_character"
+    #: Последнего персонажа удалить нельзя: приложение без персонажа не работает.
+    LAST_CHARACTER = "last_character"
+    #: Учить нечего: рецепта этого зелья нет даже в справочнике (FR-14.3).
+    RECIPE_UNKNOWN = "recipe_unknown"
 
 
 @dataclass(frozen=True, slots=True)

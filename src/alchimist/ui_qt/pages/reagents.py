@@ -56,6 +56,8 @@ class AddReagentDialog(QDialog):
 
         self.create_button = QPushButton(_("Нет такого — создать реагент"))
         self.create_button.clicked.connect(self._create)
+        # Новый реагент — запись в справочнике, её заводит только GM (FR-14.6).
+        self.create_button.setVisible(app.can_edit_catalog)
 
         buttons = QDialogButtonBox(
             QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel
@@ -165,9 +167,10 @@ class ReagentsPage(Page):
         note_button = QPushButton(_("Заметка…"))
         note_button.clicked.connect(self._edit_note)
         buttons.addWidget(note_button)
-        card_button = QPushButton(_("Карточка…"))
-        card_button.clicked.connect(self._edit_card)
-        buttons.addWidget(card_button)
+        self.card_button = QPushButton(_("Карточка…"))
+        self.card_button.setToolTip(_("Поправить реагент в справочнике (только GM)"))
+        self.card_button.clicked.connect(self._edit_card)
+        buttons.addWidget(self.card_button)
         buttons.addStretch(1)
 
         self.summary = ElementTotals(columns=7)
@@ -188,6 +191,7 @@ class ReagentsPage(Page):
     # ── отрисовка ─────────────────────────────────────────────────────────
     def refresh(self) -> None:
         super().refresh()
+        self.card_button.setVisible(self.app.can_edit_catalog)
         needle = self.search.text().strip().casefold()
         current = self._selected_id()
         reserved = self.app.brewing.reserved_quantities()
@@ -275,7 +279,7 @@ class ReagentsPage(Page):
 
     def _edit_card(self) -> None:
         ingredient_id = self._selected_id()
-        if not ingredient_id:
+        if not ingredient_id or not self.app.can_edit_catalog:
             return
         ingredient = self.app.catalog.ingredient(ingredient_id)
         dialog = IngredientDialog(self.app, ingredient, self)

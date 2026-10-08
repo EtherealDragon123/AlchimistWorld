@@ -89,6 +89,16 @@ class Paths:
         return self.profile_dir / "journal.json"
 
     @property
+    def character_file(self) -> Path:
+        """Имя, роль, наборы и изученные рецепты персонажа (FR-14.5)."""
+        return self.profile_dir / "character.json"
+
+    @property
+    def deleted_profiles_dir(self) -> Path:
+        """Куда уезжает удалённый персонаж: так его ещё можно вернуть руками."""
+        return self.root / "deleted-profiles"
+
+    @property
     def queue_file(self) -> Path:
         """Очередь варок: план игрока, а не факт (FR-12.1)."""
         return self.profile_dir / "queue.json"
@@ -101,9 +111,14 @@ class Paths:
     def for_profile(self, profile: str) -> Paths:
         return Paths(self.root, self.config, profile)
 
-    def ensure(self) -> Paths:
-        """Создаёт недостающие папки."""
+    def ensure(self, *, profile: bool = True) -> Paths:
+        """Создаёт недостающие папки.
+
+        Папку профиля — только когда за ней есть персонаж: пустая `profiles/default/`
+        на свежей установке потом путалась бы с профилем, где уже играли.
+        """
         self.catalog_dir.mkdir(parents=True, exist_ok=True)
-        self.profile_dir.mkdir(parents=True, exist_ok=True)
+        if profile:
+            self.profile_dir.mkdir(parents=True, exist_ok=True)
         self.config.mkdir(parents=True, exist_ok=True)
         return self

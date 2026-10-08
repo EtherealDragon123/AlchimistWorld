@@ -1,11 +1,11 @@
-"""Настройки приложения (FR-9.x)."""
+"""Общие настройки приложения: тема, язык, активный персонаж (FR-9.x)."""
 
 from __future__ import annotations
 
 from dataclasses import dataclass, field
 from pathlib import Path
 
-from alchimist.core.models import Kit, Theme
+from alchimist.core.models import Theme
 from alchimist.services.events import EventBus, SettingsChanged
 from alchimist.storage.paths import Paths
 from alchimist.storage.settings_store import Settings, SettingsStore
@@ -28,10 +28,6 @@ class SettingsService:
         return self._settings
 
     @property
-    def kits(self) -> tuple[Kit, ...]:
-        return self._settings.kits or (Kit.ALCHEMIST,)
-
-    @property
     def theme(self) -> Theme:
         return self._settings.theme
 
@@ -49,10 +45,6 @@ class SettingsService:
         self.bus.publish(SettingsChanged())
         return self._settings
 
-    def set_kits(self, kits: tuple[Kit, ...]) -> Settings:
-        """FR-9.1: можно выбрать несколько наборов, пустой список — алхимик."""
-        return self.update(kits=tuple(kits) or (Kit.ALCHEMIST,))
-
     def set_language(self, language: str) -> Settings:
         return self.update(language=language)
 
@@ -60,5 +52,6 @@ class SettingsService:
         """FR-9.5: выбор темы запоминается между запусками."""
         return self.update(theme=Theme(theme))
 
-    def set_character_name(self, name: str) -> Settings:
-        return self.update(character_name=name)
+    def set_active_profile(self, profile: str) -> Settings:
+        """С каким персонажем откроется приложение в следующий раз (FR-14.5)."""
+        return self.update(active_profile=profile)

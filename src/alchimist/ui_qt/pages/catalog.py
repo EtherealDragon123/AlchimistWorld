@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import (
+    QCheckBox,
     QHBoxLayout,
     QHeaderView,
     QMessageBox,
@@ -67,7 +68,7 @@ class IngredientsTab(QWidget):
         )
         self.habitat_filter = self.filters.add_combo("habitat", _("Место"), [(_("любое"), ANY)])
         self.filters.add_check("herb", _("Только «Травы»"))
-        self.filters.add_check("hidden", _("Показывать скрытые"))
+        self.hidden_check = self.filters.add_check("hidden", _("Показывать скрытые"))
         self.filters.add_stretch()
         self.filters.changed.connect(self.refresh)
 
@@ -89,7 +90,9 @@ class IngredientsTab(QWidget):
         splitter.setStretchFactor(0, 3)
         splitter.setStretchFactor(1, 2)
 
+        # Справочник правит только GM (FR-14.6): у игрока этих кнопок нет.
         buttons = QHBoxLayout()
+        self.gm_buttons: list[QPushButton] = []
         for text, handler in (
             (_("Добавить…"), self.add),
             (_("Изменить…"), self.edit),
@@ -99,6 +102,7 @@ class IngredientsTab(QWidget):
             button = QPushButton(text)
             button.clicked.connect(lambda _c=False, h=handler: h())
             buttons.addWidget(button)
+            self.gm_buttons.append(button)
         buttons.addStretch(1)
 
         layout = QVBoxLayout(self)
@@ -131,8 +135,13 @@ class IngredientsTab(QWidget):
         element = self.filters.value("element")
         habitat = self.filters.value("habitat")
         herbs_only = self.filters.value("herb")
-        show_hidden = self.filters.value("hidden")
-        warnings = self.app.catalog.all_warnings()
+        gm = self.app.can_edit_catalog
+        for button in self.gm_buttons:
+            button.setVisible(gm)
+        # Скрытое GM убрал из игры: игроку его не показываем вовсе.
+        self.hidden_check.setVisible(gm)
+        show_hidden = gm and self.filters.value("hidden")
+        warnings = self.app.catalog.all_warnings() if gm else {}
 
         current = self._selected_id()
         self.tree.clear()
@@ -180,7 +189,9 @@ class IngredientsTab(QWidget):
             self.card.clear()
             return
         ingredient = self.app.catalog.ingredient(ingredient_id)
-        warnings = self.app.catalog.validate_ingredient(ingredient)
+        warnings = (
+            self.app.catalog.validate_ingredient(ingredient) if self.app.can_edit_catalog else []
+        )
         parts = [
             f"<h3>{ingredient.name}</h3>",
             f"<p><i>{RARITY_NAMES_RU[ingredient.rarity]} · "
@@ -215,7 +226,7 @@ class IngredientsTab(QWidget):
 
     def edit(self) -> None:
         ingredient_id = self._selected_id()
-        if not ingredient_id:
+        if not ingredient_id or not self.app.can_edit_catalog:
             return
         dialog = IngredientDialog(self.app, self.app.catalog.ingredient(ingredient_id), self)
         if dialog.exec():
@@ -241,7 +252,7 @@ class IngredientsTab(QWidget):
         if not ingredient_id:
             return
         ingredient = self.app.catalog.ingredient(ingredient_id)
-        self.app.catalog.set_ingredient_hidden(ingredient_id, not ingredient.hidden)
+        self.app.set_ingredient_hidden(ingredient_id, not ingredient.hidden)
 
     def delete(self) -> None:
         ingredient_id = self._selected_id()
@@ -258,7 +269,7 @@ class IngredientsTab(QWidget):
                 ).format(name=ingredient.name),
             )
             if answer == QMessageBox.StandardButton.Yes:
-                self.app.catalog.set_ingredient_hidden(ingredient_id, True)
+                self.app.set_ingredient_hidden(ingredient_id, True)
             return
         answer = QMessageBox.question(
             self, _("Удалить"), _("Удалить «{name}» из справочника?").format(name=ingredient.name)
@@ -297,7 +308,7 @@ class PotionsTab(QWidget):
         )
         self.family_filter = self.filters.add_combo("family", _("Семейство"), [(_("любое"), ANY)])
         self.filters.add_check("market", _("Чёрный рынок"))
-        self.filters.add_check("hidden", _("Показывать скрытые"))
+        self.hidden_check = self.filters.add_check("hidden", _("Показывать скрытые"))
         self.filters.add_stretch()
         self.filters.changed.connect(self.refresh)
 
@@ -321,7 +332,9 @@ class PotionsTab(QWidget):
         splitter.setStretchFactor(0, 3)
         splitter.setStretchFactor(1, 2)
 
+        # Справочник правит только GM (FR-14.6): у игрока этих кнопок нет.
         buttons = QHBoxLayout()
+        self.gm_buttons: list[QPushButton] = []
         for text, handler in (
             (_("Добавить…"), self.add),
             (_("Изменить…"), self.edit),
@@ -331,6 +344,18 @@ class PotionsTab(QWidget):
             button = QPushButton(text)
             button.clicked.connect(lambda _c=False, h=handler: h())
             buttons.addWidget(button)
+            self.gm_buttons.append(button)
+        # Игрок рецепты не правит, а изучает и забывает (FR-14.3, FR-14.4).
+        self.learn_button = QPushButton(_("Изучить рецепт"))
+        self.learn_button.setToolTip(_("Рецепт узнали в игре — теперь он работает в подборе"))
+        self.learn_button.clicked.connect(self.learn)
+        self.forget_button = QPushButton(_("Забыть рецепт"))
+        self.forget_button.clicked.connect(self.forget)
+        self.unknown_check = QCheckBox(_("Показывать неизученные"))
+        self.unknown_check.setToolTip(_("Показывать зелья, чей рецепт персонаж ещё не изучил"))
+        self.unknown_check.toggled.connect(self._toggle_unknown)
+        for widget in (self.learn_button, self.forget_button, self.unknown_check):
+            buttons.addWidget(widget)
         buttons.addStretch(1)
 
         layout = QVBoxLayout(self)
@@ -359,8 +384,20 @@ class PotionsTab(QWidget):
         known = self.filters.value("recipe")
         family = self.filters.value("family")
         market = self.filters.value("market")
-        show_hidden = self.filters.value("hidden")
-        warnings = self.app.catalog.all_warnings()
+        gm = self.app.can_edit_catalog
+        active = self.app.characters.active
+        player = active is not None and not active.is_gm
+        for button in self.gm_buttons:
+            button.setVisible(gm)
+        for widget in (self.learn_button, self.forget_button, self.unknown_check):
+            widget.setVisible(player)
+        self.hidden_check.setVisible(gm)
+        show_hidden = gm and self.filters.value("hidden")
+        show_unknown = not player or active.show_unknown
+        self.unknown_check.blockSignals(True)
+        self.unknown_check.setChecked(show_unknown)
+        self.unknown_check.blockSignals(False)
+        warnings = self.app.catalog.all_warnings() if gm else {}
 
         current = self._selected_id()
         self.tree.clear()
@@ -373,15 +410,13 @@ class PotionsTab(QWidget):
                 continue
             if known != ANY and potion.is_known != known:
                 continue
+            if not show_unknown and not potion.is_known:
+                continue
             if family != ANY and potion.family != family:
                 continue
             if market and not potion.is_black_market:
                 continue
-            recipe_text = (
-                f"{potion.recipe.format_bases_ru()} · {potion.recipe.elements.format_ru()}"
-                if potion.recipe
-                else _("неизвестен")
-            )
+            recipe_text = self._recipe_text(potion)
             item = QTreeWidgetItem(
                 [
                     potion.name + (" ⚠" if potion.id in warnings else ""),
@@ -409,13 +444,29 @@ class PotionsTab(QWidget):
         item = self.tree.currentItem()
         return item.data(0, Qt.ItemDataRole.UserRole) if item else None
 
+    def _recipe_text(self, potion) -> str:
+        """У игрока «не изучен» — рецепт есть, но он его не знает; «неизвестен» — нет ни у кого."""
+        if potion.recipe:
+            return f"{potion.recipe.format_bases_ru()} · {potion.recipe.elements.format_ru()}"
+        if self.app.catalog.has_recipe(potion.id):
+            return _("не изучен")
+        return _("неизвестен")
+
+    def _update_actions(self) -> None:
+        potion_id = self._selected_id()
+        learned = bool(potion_id) and self.app.catalog.potion(potion_id).recipe is not None
+        learnable = bool(potion_id) and self.app.catalog.has_recipe(potion_id)
+        self.learn_button.setEnabled(learnable and not learned)
+        self.forget_button.setEnabled(learned)
+
     def _show_card(self) -> None:
         potion_id = self._selected_id()
+        self._update_actions()
         if not potion_id:
             self.card.clear()
             return
         potion = self.app.catalog.potion(potion_id)
-        warnings = self.app.catalog.potion_warnings(potion)
+        warnings = self.app.catalog.potion_warnings(potion) if self.app.can_edit_catalog else []
         tags = " · ".join(TAG_NAMES_RU.get(t, t) for t in sorted(potion.tags))
         parts = [
             f"<h3>{potion.name}</h3>",
@@ -428,6 +479,12 @@ class PotionsTab(QWidget):
             parts.append(
                 f"<p><b>{_('Рецепт')}:</b> {potion.recipe.format_bases_ru()} · "
                 f"{potion.recipe.elements.format_ru()}</p>"
+            )
+        elif self.app.catalog.has_recipe(potion.id):
+            parts.append(
+                f"<p><b>{_('Рецепт')}:</b> <i>{_('не изучен')}</i> — "
+                + _("изучите его кнопкой «Изучить рецепт», когда узнаете в игре")
+                + "</p>"
             )
         else:
             parts.append(f"<p><b>{_('Рецепт')}:</b> <i>{_('неизвестен')}</i></p>")
@@ -449,7 +506,7 @@ class PotionsTab(QWidget):
 
     def edit(self) -> None:
         potion_id = self._selected_id()
-        if not potion_id:
+        if not potion_id or not self.app.can_edit_catalog:
             return
         dialog = PotionDialog(self.app, self.app.catalog.potion(potion_id), self)
         if dialog.exec():
@@ -471,7 +528,7 @@ class PotionsTab(QWidget):
         if not potion_id:
             return
         potion = self.app.catalog.potion(potion_id)
-        self.app.catalog.set_potion_hidden(potion_id, not potion.hidden)
+        self.app.set_potion_hidden(potion_id, not potion.hidden)
 
     def delete(self) -> None:
         potion_id = self._selected_id()
@@ -488,13 +545,41 @@ class PotionsTab(QWidget):
                 ).format(name=potion.name),
             )
             if answer == QMessageBox.StandardButton.Yes:
-                self.app.catalog.set_potion_hidden(potion_id, True)
+                self.app.set_potion_hidden(potion_id, True)
             return
         answer = QMessageBox.question(
             self, _("Удалить"), _("Удалить «{name}» из справочника?").format(name=potion.name)
         )
         if answer == QMessageBox.StandardButton.Yes:
             self.app.delete_potion(potion_id)
+
+    def learn(self) -> None:
+        potion_id = self._selected_id()
+        if not potion_id:
+            return
+        try:
+            self.app.learn_recipe(potion_id)
+        except AlchimistError as exc:
+            QMessageBox.warning(self, _("Не получилось"), describe(exc.message))
+
+    def forget(self) -> None:
+        potion_id = self._selected_id()
+        if not potion_id:
+            return
+        potion = self.app.catalog.potion(potion_id)
+        answer = QMessageBox.question(
+            self,
+            _("Забыть рецепт"),
+            _("Забыть рецепт «{name}»? Изучить его снова можно в любой момент.").format(
+                name=potion.name
+            ),
+        )
+        if answer == QMessageBox.StandardButton.Yes:
+            self.app.forget_recipe(potion_id)
+
+    def _toggle_unknown(self, show: bool) -> None:
+        if self.app.characters.active is not None:
+            self.app.characters.set_show_unknown(show)
 
 
 class CatalogPage(Page):
@@ -517,6 +602,7 @@ class CatalogPage(Page):
 
         bridge.catalog_changed.connect(self.invalidate)
         bridge.inventory_changed.connect(self.invalidate)
+        bridge.character_changed.connect(self.invalidate)
 
     def refresh(self) -> None:
         super().refresh()

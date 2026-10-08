@@ -16,15 +16,17 @@ from alchimist.storage.paths import DEFAULT_PROFILE, Paths
 
 @dataclass(frozen=True, slots=True)
 class Settings:
-    """Содержимое `settings.toml`."""
+    """Содержимое `settings.toml`: то, что общее для всех персонажей установки."""
 
     language: str = "ru"
     #: Тёмная тема — выбор по умолчанию при первом запуске.
     theme: Theme = Theme.DARK
-    kits: tuple[Kit, ...] = (Kit.ALCHEMIST,)
-    character_name: str = ""
     active_profile: str = DEFAULT_PROFILE
     schema_version: int = 1
+    #: Наборы и имя раньше жили здесь, теперь — у персонажа (FR-14.5). Читаются
+    #: только затем, чтобы перенести их в первого персонажа, и обратно не пишутся.
+    legacy_kits: tuple[Kit, ...] = ()
+    legacy_character_name: str = ""
 
     def with_(self, **changes: object) -> Settings:
         return replace(self, **changes)  # type: ignore[arg-type]
@@ -50,7 +52,7 @@ class SettingsStore:
                 ErrorCode.STORAGE_CORRUPT, path=str(self.file), reason=str(exc)
             ) from exc
         kits: list[Kit] = []
-        for raw in data.get("kits", ["alchemist"]):
+        for raw in data.get("kits", []):
             try:
                 kits.append(Kit(raw))
             except ValueError:
@@ -65,10 +67,10 @@ class SettingsStore:
         self._cache = Settings(
             language=str(data.get("language", "ru")),
             theme=theme,
-            kits=tuple(kits) or (Kit.ALCHEMIST,),
-            character_name=str(data.get("character_name", "")),
             active_profile=str(data.get("active_profile", DEFAULT_PROFILE)),
             schema_version=int(data.get("schema_version", 1)),
+            legacy_kits=tuple(kits),
+            legacy_character_name=str(data.get("character_name", "")),
         )
         return self._cache
 
@@ -77,8 +79,6 @@ class SettingsStore:
             "schema_version": settings.schema_version,
             "language": settings.language,
             "theme": str(settings.theme.value),
-            "kits": [str(k.value) for k in settings.kits],
-            "character_name": settings.character_name,
             "active_profile": settings.active_profile,
         }
         write_atomic(self.file, tomli_w.dumps(payload))

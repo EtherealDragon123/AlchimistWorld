@@ -98,6 +98,7 @@ class MainWindow(QMainWindow):
 
         self.bridge.settings_changed.connect(self._on_settings_changed)
         self.bridge.settings_changed.connect(self._update_status)
+        self.bridge.character_changed.connect(self._on_character_changed)
         self.bridge.inventory_changed.connect(self._update_status)
         self.bridge.catalog_changed.connect(self._update_status)
         self.bridge.queue_changed.connect(self._update_status)
@@ -237,10 +238,27 @@ class MainWindow(QMainWindow):
         if hasattr(current, "activate"):
             current.activate()
 
+    # ── персонажи (FR-14.5) ───────────────────────────────────────────────
+    def _on_character_changed(self, event=None) -> None:
+        """Другой персонаж — другие инвентарь, журнал и права: перерисовать всё.
+
+        Изученный рецепт или новые наборы меняют подбор и справочник, и страницам
+        тоже проще пересчитаться целиком: это делается лениво, при показе.
+        """
+        for page in self.pages:
+            page.invalidate()
+        current = self.stack.currentWidget()
+        if hasattr(current, "activate"):
+            current.activate()
+        self._update_status()
+        if event is not None and getattr(event, "switched", False):
+            active = self.app.characters.active
+            if active is not None:
+                self.statusBar().showMessage(_("Персонаж: {name}").format(name=active.name), 3000)
+
     # ── строка состояния ──────────────────────────────────────────────────
     def _update_status(self, *_args) -> None:
-        settings = self.app.settings.settings
-        kits = ", ".join(KIT_NAMES_RU[k] for k in settings.kits)
+        kits = ", ".join(KIT_NAMES_RU[k] for k in self.app.characters.kits)
         reagents = sum(s.qty for s in self.app.inventory.inventory.reagents)
         potions = sum(s.qty for s in self.app.inventory.inventory.potions)
         message = _("Набор: {kits}   ·   реагентов: {reagents}   ·   зелий: {potions}").format(
@@ -253,8 +271,8 @@ class MainWindow(QMainWindow):
         self.setWindowTitle(self._title())
 
     def _title(self) -> str:
-        name = self.app.settings.settings.character_name
-        return f"AlchimistWorld — {name}" if name else "AlchimistWorld"
+        active = self.app.characters.active
+        return f"AlchimistWorld — {active.name}" if active else "AlchimistWorld"
 
     def _show_startup_notices(self) -> None:
         notices = self.app.startup_notices

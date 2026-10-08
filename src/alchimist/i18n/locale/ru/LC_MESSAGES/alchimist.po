@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: AlchimistWorld VERSION\n"
 "Report-Msgid-Bugs-To: -\n"
-"POT-Creation-Date: 2026-10-08 16:15+0400\n"
+"POT-Creation-Date: 2026-10-08 17:30+0400\n"
 "PO-Revision-Date: 2026-09-11 17:15+0400\n"
 "Last-Translator: AlchimistWorld\n"
 "Language: ru\n"
@@ -20,73 +20,78 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.18.0\n"
 
-#: src/alchimist/cli/__main__.py:256
+#: src/alchimist/cli/__main__.py:331
 msgid "Помощник по алхимии для D&D"
 msgstr "Помощник по алхимии для D&D"
 
-#: src/alchimist/ui_qt/main_window.py:139
+#: src/alchimist/ui_qt/main_window.py:140
 msgid "Файл"
 msgstr "Файл"
 
-#: src/alchimist/ui_qt/main_window.py:140
+#: src/alchimist/ui_qt/main_window.py:141
 msgid "Перечитать файлы"
 msgstr "Перечитать файлы"
 
-#: src/alchimist/ui_qt/main_window.py:145
+#: src/alchimist/ui_qt/dialogs/character_dialog.py:95
+#: src/alchimist/ui_qt/main_window.py:146
 msgid "Выход"
 msgstr "Выход"
 
-#: src/alchimist/ui_qt/main_window.py:150
+#: src/alchimist/ui_qt/main_window.py:151
 msgid "Переход"
 msgstr "Переход"
 
-#: src/alchimist/ui_qt/main_window.py:157
+#: src/alchimist/ui_qt/main_window.py:158
 msgid "Правка"
 msgstr "Правка"
 
-#: src/alchimist/ui_qt/main_window.py:158
+#: src/alchimist/ui_qt/main_window.py:159
 msgid "Отменить последнюю варку"
 msgstr "Отменить последнюю варку"
 
-#: src/alchimist/ui_qt/main_window.py:163
+#: src/alchimist/ui_qt/main_window.py:164
 msgid "Справка"
 msgstr "Справка"
 
-#: src/alchimist/ui_qt/main_window.py:164 src/alchimist/ui_qt/main_window.py:202
+#: src/alchimist/ui_qt/main_window.py:165 src/alchimist/ui_qt/main_window.py:203
 msgid "О программе"
 msgstr "О программе"
 
-#: src/alchimist/ui_qt/main_window.py:167 src/alchimist/ui_qt/main_window.py:213
+#: src/alchimist/ui_qt/main_window.py:168 src/alchimist/ui_qt/main_window.py:214
 msgid "Горячие клавиши"
 msgstr "Горячие клавиши"
 
-#: src/alchimist/ui_qt/main_window.py:174
+#: src/alchimist/ui_qt/main_window.py:175
 msgid "Отменять нечего"
 msgstr "Отменять нечего"
 
-#: src/alchimist/ui_qt/main_window.py:178 src/alchimist/ui_qt/pages/journal.py:330
+#: src/alchimist/ui_qt/main_window.py:179 src/alchimist/ui_qt/pages/journal.py:332
 msgid "Отменить варку"
 msgstr "Отменить варку"
 
-#: src/alchimist/ui_qt/main_window.py:179
+#: src/alchimist/ui_qt/main_window.py:180
 msgid "Вернуть реагенты последней варки и убрать полученное зелье?"
 msgstr "Вернуть реагенты последней варки и убрать полученное зелье?"
 
-#: src/alchimist/ui_qt/dialogs/brew_dialog.py:257
-#: src/alchimist/ui_qt/dialogs/brew_dialog.py:344 src/alchimist/ui_qt/main_window.py:188
-#: src/alchimist/ui_qt/pages/catalog.py:232 src/alchimist/ui_qt/pages/catalog.py:462
-#: src/alchimist/ui_qt/pages/journal.py:307 src/alchimist/ui_qt/pages/journal.py:343
+#: src/alchimist/ui_qt/dialogs/brew_dialog.py:259
+#: src/alchimist/ui_qt/dialogs/brew_dialog.py:347
+#: src/alchimist/ui_qt/dialogs/brew_dialog.py:381
+#: src/alchimist/ui_qt/dialogs/character_dialog.py:146
+#: src/alchimist/ui_qt/main_window.py:189 src/alchimist/ui_qt/pages/catalog.py:243
+#: src/alchimist/ui_qt/pages/catalog.py:519 src/alchimist/ui_qt/pages/catalog.py:563
+#: src/alchimist/ui_qt/pages/journal.py:309 src/alchimist/ui_qt/pages/journal.py:345
 #: src/alchimist/ui_qt/pages/lab.py:495 src/alchimist/ui_qt/pages/potions.py:228
-#: src/alchimist/ui_qt/pages/reagents.py:103 src/alchimist/ui_qt/pages/reagents.py:286
-#: src/alchimist/ui_qt/pages/settings.py:208
+#: src/alchimist/ui_qt/pages/reagents.py:105 src/alchimist/ui_qt/pages/reagents.py:290
+#: src/alchimist/ui_qt/pages/settings.py:238 src/alchimist/ui_qt/pages/settings.py:258
+#: src/alchimist/ui_qt/pages/settings.py:300 src/alchimist/ui_qt/pages/settings.py:315
 msgid "Не получилось"
 msgstr "Не получилось"
 
-#: src/alchimist/ui_qt/main_window.py:195
+#: src/alchimist/ui_qt/main_window.py:196
 msgid "Файлы перечитаны"
 msgstr "Файлы перечитаны"
 
-#: src/alchimist/ui_qt/main_window.py:204
+#: src/alchimist/ui_qt/main_window.py:205
 #, python-brace-format
 msgid ""
 "<h3>AlchimistWorld {version}</h3><p>Помощник по homebrew-алхимии для "
@@ -95,7 +100,7 @@ msgstr ""
 "<h3>AlchimistWorld {version}</h3><p>Помощник по homebrew-алхимии для "
 "D&D.</p><p>Данные: {data}</p>"
 
-#: src/alchimist/ui_qt/main_window.py:215
+#: src/alchimist/ui_qt/main_window.py:216
 msgid ""
 "Ctrl+F — поиск на странице\n"
 "Ctrl+Enter — сварить\n"
@@ -109,17 +114,22 @@ msgstr ""
 "Ctrl+Z — отменить последнюю варку\n"
 "F5 — перечитать файлы"
 
-#: src/alchimist/ui_qt/main_window.py:246
+#: src/alchimist/ui_qt/main_window.py:257
+#, python-brace-format
+msgid "Персонаж: {name}"
+msgstr "Персонаж: {name}"
+
+#: src/alchimist/ui_qt/main_window.py:264
 #, python-brace-format
 msgid "Набор: {kits}   ·   реагентов: {reagents}   ·   зелий: {potions}"
 msgstr "Набор: {kits}   ·   реагентов: {reagents}   ·   зелий: {potions}"
 
-#: src/alchimist/ui_qt/main_window.py:251
+#: src/alchimist/ui_qt/main_window.py:269
 #, python-brace-format
 msgid "   ·   в очереди: {reserved}"
 msgstr "   ·   в очереди: {reserved}"
 
-#: src/alchimist/ui_qt/main_window.py:264
+#: src/alchimist/ui_qt/main_window.py:282
 msgid "Данные загружены с замечаниями"
 msgstr "Данные загружены с замечаниями"
 
@@ -160,41 +170,41 @@ msgstr "Создать…"
 msgid "Завести новое зелье в справочнике"
 msgstr "Завести новое зелье в справочнике"
 
-#: src/alchimist/ui_qt/dialogs/brew_dialog.py:121
+#: src/alchimist/ui_qt/dialogs/brew_dialog.py:123
 msgid "Сколько порций варится за раз. Столько же зелий и получится (П-8.2)."
 msgstr "Сколько порций варится за раз. Столько же зелий и получится (П-8.2)."
 
-#: src/alchimist/ui_qt/dialogs/brew_dialog.py:131
+#: src/alchimist/ui_qt/dialogs/brew_dialog.py:133
 msgid "Заметка к записи журнала"
 msgstr "Заметка к записи журнала"
 
-#: src/alchimist/ui_qt/dialogs/brew_dialog.py:135
+#: src/alchimist/ui_qt/dialogs/brew_dialog.py:137
 #: src/alchimist/ui_qt/dialogs/potion_dialog.py:55 src/alchimist/ui_qt/pages/journal.py:87
 #: src/alchimist/ui_qt/pages/journal.py:125 src/alchimist/ui_qt/pages/lab.py:70
 msgid "Основа"
 msgstr "Основа"
 
-#: src/alchimist/ui_qt/dialogs/brew_dialog.py:136 src/alchimist/ui_qt/pages/catalog.py:510
+#: src/alchimist/ui_qt/dialogs/brew_dialog.py:138 src/alchimist/ui_qt/pages/catalog.py:595
 msgid "Реагенты"
 msgstr "Реагенты"
 
-#: src/alchimist/ui_qt/dialogs/brew_dialog.py:137 src/alchimist/ui_qt/pages/lab.py:132
+#: src/alchimist/ui_qt/dialogs/brew_dialog.py:139 src/alchimist/ui_qt/pages/lab.py:132
 msgid "Сумма элементов"
 msgstr "Сумма элементов"
 
-#: src/alchimist/ui_qt/dialogs/brew_dialog.py:144
+#: src/alchimist/ui_qt/dialogs/brew_dialog.py:146
 msgid "Что вышло"
 msgstr "Что вышло"
 
-#: src/alchimist/ui_qt/dialogs/brew_dialog.py:146 src/alchimist/ui_qt/pages/journal.py:81
+#: src/alchimist/ui_qt/dialogs/brew_dialog.py:148 src/alchimist/ui_qt/pages/journal.py:81
 msgid "Исход"
 msgstr "Исход"
 
-#: src/alchimist/ui_qt/dialogs/brew_dialog.py:147
+#: src/alchimist/ui_qt/dialogs/brew_dialog.py:149
 msgid "Результат"
 msgstr "Результат"
 
-#: src/alchimist/ui_qt/dialogs/brew_dialog.py:151
+#: src/alchimist/ui_qt/dialogs/brew_dialog.py:153
 #: src/alchimist/ui_qt/dialogs/potion_dialog.py:99 src/alchimist/ui_qt/pages/almost.py:48
 #: src/alchimist/ui_qt/pages/can_brew.py:134 src/alchimist/ui_qt/pages/can_brew.py:186
 #: src/alchimist/ui_qt/pages/journal.py:91 src/alchimist/ui_qt/pages/lab.py:174
@@ -202,90 +212,151 @@ msgstr "Результат"
 msgid "Зелье"
 msgstr "Зелье"
 
-#: src/alchimist/ui_qt/dialogs/brew_dialog.py:152 src/alchimist/ui_qt/pages/can_brew.py:134
+#: src/alchimist/ui_qt/dialogs/brew_dialog.py:154 src/alchimist/ui_qt/pages/can_brew.py:134
 #: src/alchimist/ui_qt/pages/can_brew.py:186 src/alchimist/ui_qt/pages/lab.py:174
 msgid "Порций"
 msgstr "Порций"
 
-#: src/alchimist/ui_qt/dialogs/brew_dialog.py:153
+#: src/alchimist/ui_qt/dialogs/brew_dialog.py:155
 msgid "Лишние эссенции"
 msgstr "Лишние эссенции"
 
-#: src/alchimist/ui_qt/dialogs/brew_dialog.py:154
+#: src/alchimist/ui_qt/dialogs/brew_dialog.py:156
 msgid "Сложность броска"
 msgstr "Сложность броска"
 
-#: src/alchimist/ui_qt/dialogs/brew_dialog.py:155 src/alchimist/ui_qt/pages/potions.py:124
-#: src/alchimist/ui_qt/pages/potions.py:244 src/alchimist/ui_qt/pages/reagents.py:147
-#: src/alchimist/ui_qt/pages/reagents.py:271
+#: src/alchimist/ui_qt/dialogs/brew_dialog.py:157 src/alchimist/ui_qt/pages/potions.py:124
+#: src/alchimist/ui_qt/pages/potions.py:244 src/alchimist/ui_qt/pages/reagents.py:149
+#: src/alchimist/ui_qt/pages/reagents.py:275
 msgid "Заметка"
 msgstr "Заметка"
 
-#: src/alchimist/ui_qt/dialogs/brew_dialog.py:160 src/alchimist/ui_qt/pages/can_brew.py:342
+#: src/alchimist/ui_qt/dialogs/brew_dialog.py:162 src/alchimist/ui_qt/pages/can_brew.py:342
 msgid "Сварить"
 msgstr "Сварить"
 
-#: src/alchimist/ui_qt/dialogs/brew_dialog.py:168
+#: src/alchimist/ui_qt/dialogs/brew_dialog.py:170
 msgid "Ctrl+Enter — сварить. Кубы бросаются за столом (П-7.2)."
 msgstr "Ctrl+Enter — сварить. Кубы бросаются за столом (П-7.2)."
 
-#: src/alchimist/ui_qt/dialogs/brew_dialog.py:222
+#: src/alchimist/ui_qt/dialogs/brew_dialog.py:224
 #, python-brace-format
 msgid "Совпадает с рецептом: {names}"
 msgstr "Совпадает с рецептом: {names}"
 
-#: src/alchimist/ui_qt/dialogs/brew_dialog.py:233
+#: src/alchimist/ui_qt/dialogs/brew_dialog.py:235
 msgid "Неизвестная комбинация: рецепта на такую сумму нет"
 msgstr "Неизвестная комбинация: рецепта на такую сумму нет"
 
-#: src/alchimist/ui_qt/dialogs/brew_dialog.py:237
+#: src/alchimist/ui_qt/dialogs/brew_dialog.py:239
 #, python-brace-format
 msgid "Эту комбинацию уже пробовали: {result}"
 msgstr "Эту комбинацию уже пробовали: {result}"
 
-#: src/alchimist/ui_qt/dialogs/brew_dialog.py:242 src/alchimist/ui_qt/pages/lab.py:377
+#: src/alchimist/ui_qt/dialogs/brew_dialog.py:244 src/alchimist/ui_qt/pages/lab.py:377
 msgid "Выбранные наборы такую варку не разрешают (П-6.3)"
 msgstr "Выбранные наборы такую варку не разрешают (П-6.3)"
 
-#: src/alchimist/ui_qt/dialogs/brew_dialog.py:262 src/alchimist/ui_qt/pages/catalog.py:466
+#: src/alchimist/ui_qt/dialogs/brew_dialog.py:264 src/alchimist/ui_qt/pages/catalog.py:523
 msgid "Сохранено с предупреждениями"
 msgstr "Сохранено с предупреждениями"
 
-#: src/alchimist/ui_qt/dialogs/brew_dialog.py:299
+#: src/alchimist/ui_qt/dialogs/brew_dialog.py:301
 msgid "по рецепту не считается"
 msgstr "по рецепту не считается"
 
-#: src/alchimist/ui_qt/dialogs/brew_dialog.py:299
+#: src/alchimist/ui_qt/dialogs/brew_dialog.py:301
 msgid "элементов не хватает"
 msgstr "элементов не хватает"
 
-#: src/alchimist/ui_qt/dialogs/brew_dialog.py:319
+#: src/alchimist/ui_qt/dialogs/brew_dialog.py:321
 msgid "нет"
 msgstr "нет"
 
-#: src/alchimist/ui_qt/dialogs/brew_dialog.py:351 src/alchimist/ui_qt/pages/journal.py:82
-#: src/alchimist/ui_qt/pages/journal.py:219 src/alchimist/ui_qt/pages/lab.py:503
+#: src/alchimist/ui_qt/dialogs/brew_dialog.py:367
+msgid "Открыт рецепт"
+msgstr "Открыт рецепт"
+
+#: src/alchimist/ui_qt/dialogs/brew_dialog.py:369
+#, python-brace-format
+msgid ""
+"Сумма элементов в точности совпала с рецептом «{name}»: {bases} · {elements}.\n"
+"\n"
+"Изучить этот рецепт?"
+msgstr ""
+"Сумма элементов в точности совпала с рецептом «{name}»: {bases} · {elements}.\n"
+"\n"
+"Изучить этот рецепт?"
+
+#: src/alchimist/ui_qt/dialogs/brew_dialog.py:386 src/alchimist/ui_qt/pages/journal.py:82
+#: src/alchimist/ui_qt/pages/journal.py:221 src/alchimist/ui_qt/pages/lab.py:503
 msgid "провал"
 msgstr "провал"
 
-#: src/alchimist/ui_qt/dialogs/brew_dialog.py:353 src/alchimist/ui_qt/pages/lab.py:505
+#: src/alchimist/ui_qt/dialogs/brew_dialog.py:388 src/alchimist/ui_qt/pages/lab.py:505
 msgid "неизвестно"
 msgstr "неизвестно"
 
-#: src/alchimist/ui_qt/dialogs/brew_dialog.py:356 src/alchimist/ui_qt/pages/lab.py:508
+#: src/alchimist/ui_qt/dialogs/brew_dialog.py:391 src/alchimist/ui_qt/pages/lab.py:508
 msgid "ничего не вышло"
 msgstr "ничего не вышло"
 
-#: src/alchimist/ui_qt/dialogs/brew_dialog.py:358
+#: src/alchimist/ui_qt/dialogs/brew_dialog.py:393
 msgid "получился Бармаглот"
 msgstr "получился Бармаглот"
 
-#: src/alchimist/ui_qt/dialogs/brew_dialog.py:360 src/alchimist/ui_qt/pages/lab.py:512
+#: src/alchimist/ui_qt/dialogs/brew_dialog.py:395 src/alchimist/ui_qt/pages/lab.py:512
 msgid "получилось зелье"
 msgstr "получилось зелье"
 
+#: src/alchimist/ui_qt/dialogs/character_dialog.py:51
+msgid "Добро пожаловать"
+msgstr "Добро пожаловать"
+
+#: src/alchimist/ui_qt/dialogs/character_dialog.py:51
+msgid "Новый персонаж"
+msgstr "Новый персонаж"
+
+#: src/alchimist/ui_qt/dialogs/character_dialog.py:55
+msgid "Например, Гримли"
+msgstr "Например, Гримли"
+
+#: src/alchimist/ui_qt/dialogs/character_dialog.py:66
+msgid "Можно выбрать несколько. Наборы меняются потом в «Настройках»."
+msgstr "Можно выбрать несколько. Наборы меняются потом в «Настройках»."
+
+#: src/alchimist/ui_qt/dialogs/character_dialog.py:70
+msgid "Имя"
+msgstr "Имя"
+
+#: src/alchimist/ui_qt/dialogs/character_dialog.py:71
+msgid "Имя можно будет поменять в «Настройках»."
+msgstr "Имя можно будет поменять в «Настройках»."
+
+#: src/alchimist/ui_qt/dialogs/character_dialog.py:72
+#: src/alchimist/ui_qt/pages/settings.py:73
+msgid "Наборы инструментов"
+msgstr "Наборы инструментов"
+
+#: src/alchimist/ui_qt/dialogs/character_dialog.py:87
+#: src/alchimist/ui_qt/pages/settings.py:99
+msgid "Тема оформления"
+msgstr "Тема оформления"
+
+#: src/alchimist/ui_qt/dialogs/character_dialog.py:93
+msgid "Создать"
+msgstr "Создать"
+
+#: src/alchimist/ui_qt/dialogs/character_dialog.py:103
+msgid ""
+"Создайте персонажа. У каждого персонажа свои реагенты, зелья, журнал и изученные "
+"рецепты, а рецепты обычных зелий он знает с самого начала."
+msgstr ""
+"Создайте персонажа. У каждого персонажа свои реагенты, зелья, журнал и изученные "
+"рецепты, а рецепты обычных зелий он знает с самого начала."
+
 #: src/alchimist/ui_qt/dialogs/ingredient_dialog.py:46 src/alchimist/ui_qt/pages/lab.py:91
-#: src/alchimist/ui_qt/pages/lab.py:110 src/alchimist/ui_qt/pages/reagents.py:147
+#: src/alchimist/ui_qt/pages/lab.py:110 src/alchimist/ui_qt/pages/reagents.py:149
 msgid "Реагент"
 msgstr "Реагент"
 
@@ -310,29 +381,29 @@ msgid "Скрыт: не показывать в списках и подборе
 msgstr "Скрыт: не показывать в списках и подборе"
 
 #: src/alchimist/ui_qt/dialogs/ingredient_dialog.py:78
-#: src/alchimist/ui_qt/dialogs/potion_dialog.py:131 src/alchimist/ui_qt/pages/catalog.py:76
-#: src/alchimist/ui_qt/pages/catalog.py:306
+#: src/alchimist/ui_qt/dialogs/potion_dialog.py:131 src/alchimist/ui_qt/pages/catalog.py:77
+#: src/alchimist/ui_qt/pages/catalog.py:317
 msgid "Название"
 msgstr "Название"
 
 #: src/alchimist/ui_qt/dialogs/ingredient_dialog.py:79
 #: src/alchimist/ui_qt/dialogs/potion_dialog.py:133
-#: src/alchimist/ui_qt/pages/can_brew.py:82 src/alchimist/ui_qt/pages/catalog.py:55
-#: src/alchimist/ui_qt/pages/catalog.py:76 src/alchimist/ui_qt/pages/catalog.py:283
-#: src/alchimist/ui_qt/pages/catalog.py:306 src/alchimist/ui_qt/pages/potions.py:124
-#: src/alchimist/ui_qt/pages/reagents.py:147
+#: src/alchimist/ui_qt/pages/can_brew.py:82 src/alchimist/ui_qt/pages/catalog.py:56
+#: src/alchimist/ui_qt/pages/catalog.py:77 src/alchimist/ui_qt/pages/catalog.py:294
+#: src/alchimist/ui_qt/pages/catalog.py:317 src/alchimist/ui_qt/pages/potions.py:124
+#: src/alchimist/ui_qt/pages/reagents.py:149
 msgid "Редкость"
 msgstr "Редкость"
 
 #: src/alchimist/ui_qt/dialogs/ingredient_dialog.py:80
-#: src/alchimist/ui_qt/pages/catalog.py:61 src/alchimist/ui_qt/pages/catalog.py:76
+#: src/alchimist/ui_qt/pages/catalog.py:62 src/alchimist/ui_qt/pages/catalog.py:77
 msgid "Категория"
 msgstr "Категория"
 
 #: src/alchimist/ui_qt/dialogs/ingredient_dialog.py:82
-#: src/alchimist/ui_qt/dialogs/potion_dialog.py:56 src/alchimist/ui_qt/pages/catalog.py:76
-#: src/alchimist/ui_qt/pages/catalog.py:190 src/alchimist/ui_qt/pages/lab.py:91
-#: src/alchimist/ui_qt/pages/lab.py:110 src/alchimist/ui_qt/pages/reagents.py:147
+#: src/alchimist/ui_qt/dialogs/potion_dialog.py:56 src/alchimist/ui_qt/pages/catalog.py:77
+#: src/alchimist/ui_qt/pages/catalog.py:201 src/alchimist/ui_qt/pages/lab.py:91
+#: src/alchimist/ui_qt/pages/lab.py:110 src/alchimist/ui_qt/pages/reagents.py:149
 msgid "Элементы"
 msgstr "Элементы"
 
@@ -349,7 +420,7 @@ msgstr "Описание"
 msgid "П-3.2: единиц элементов должно быть столько же, сколько уровень редкости"
 msgstr "П-3.2: единиц элементов должно быть столько же, сколько уровень редкости"
 
-#: src/alchimist/ui_qt/dialogs/merge_dialog.py:34 src/alchimist/ui_qt/pages/settings.py:201
+#: src/alchimist/ui_qt/dialogs/merge_dialog.py:34 src/alchimist/ui_qt/pages/settings.py:308
 msgid "Импорт справочника"
 msgstr "Импорт справочника"
 
@@ -419,9 +490,9 @@ msgstr "Инвентарь и журнал при обмене не переда
 msgid "моё: {mine}, чужое: {theirs}"
 msgstr "моё: {mine}, чужое: {theirs}"
 
-#: src/alchimist/ui_qt/dialogs/potion_dialog.py:41 src/alchimist/ui_qt/pages/catalog.py:295
-#: src/alchimist/ui_qt/pages/catalog.py:306 src/alchimist/ui_qt/pages/catalog.py:429
-#: src/alchimist/ui_qt/pages/catalog.py:433
+#: src/alchimist/ui_qt/dialogs/potion_dialog.py:41 src/alchimist/ui_qt/pages/catalog.py:306
+#: src/alchimist/ui_qt/pages/catalog.py:317 src/alchimist/ui_qt/pages/catalog.py:480
+#: src/alchimist/ui_qt/pages/catalog.py:485 src/alchimist/ui_qt/pages/catalog.py:490
 msgid "Рецепт"
 msgstr "Рецепт"
 
@@ -438,7 +509,7 @@ msgid "Примечание"
 msgstr "Примечание"
 
 #: src/alchimist/ui_qt/dialogs/potion_dialog.py:114
-#: src/alchimist/ui_qt/pages/can_brew.py:93 src/alchimist/ui_qt/pages/catalog.py:299
+#: src/alchimist/ui_qt/pages/can_brew.py:93 src/alchimist/ui_qt/pages/catalog.py:310
 msgid "Чёрный рынок"
 msgstr "Чёрный рынок"
 
@@ -451,13 +522,13 @@ msgid "Скрыто"
 msgstr "Скрыто"
 
 #: src/alchimist/ui_qt/dialogs/potion_dialog.py:132
-#: src/alchimist/ui_qt/pages/can_brew.py:92 src/alchimist/ui_qt/pages/catalog.py:298
+#: src/alchimist/ui_qt/pages/can_brew.py:92 src/alchimist/ui_qt/pages/catalog.py:309
 msgid "Семейство"
 msgstr "Семейство"
 
 #: src/alchimist/ui_qt/dialogs/potion_dialog.py:134
-#: src/alchimist/ui_qt/pages/can_brew.py:88 src/alchimist/ui_qt/pages/catalog.py:289
-#: src/alchimist/ui_qt/pages/catalog.py:306 src/alchimist/ui_qt/pages/potions.py:124
+#: src/alchimist/ui_qt/pages/can_brew.py:88 src/alchimist/ui_qt/pages/catalog.py:300
+#: src/alchimist/ui_qt/pages/catalog.py:317 src/alchimist/ui_qt/pages/potions.py:124
 msgid "Вид"
 msgstr "Вид"
 
@@ -478,7 +549,7 @@ msgid " ед."
 msgstr " ед."
 
 #: src/alchimist/ui_qt/pages/almost.py:41 src/alchimist/ui_qt/pages/potions.py:114
-#: src/alchimist/ui_qt/pages/reagents.py:136 src/alchimist/ui_qt/widgets/common.py:32
+#: src/alchimist/ui_qt/pages/reagents.py:138 src/alchimist/ui_qt/widgets/common.py:32
 msgid "Поиск…"
 msgstr "Поиск…"
 
@@ -520,27 +591,27 @@ msgstr "в справочнике нет реагента, который зак
 msgid "Могу сварить"
 msgstr "Могу сварить"
 
-#: src/alchimist/ui_qt/pages/can_brew.py:69 src/alchimist/ui_qt/pages/catalog.py:49
-#: src/alchimist/ui_qt/pages/catalog.py:277
+#: src/alchimist/ui_qt/pages/can_brew.py:69 src/alchimist/ui_qt/pages/catalog.py:50
+#: src/alchimist/ui_qt/pages/catalog.py:288
 msgid "Поиск по названию…"
 msgstr "Поиск по названию…"
 
-#: src/alchimist/ui_qt/pages/can_brew.py:83 src/alchimist/ui_qt/pages/catalog.py:56
-#: src/alchimist/ui_qt/pages/catalog.py:62 src/alchimist/ui_qt/pages/catalog.py:284
+#: src/alchimist/ui_qt/pages/can_brew.py:83 src/alchimist/ui_qt/pages/catalog.py:57
+#: src/alchimist/ui_qt/pages/catalog.py:63 src/alchimist/ui_qt/pages/catalog.py:295
 #: src/alchimist/ui_qt/pages/journal.py:88
 msgid "любая"
 msgstr "любая"
 
-#: src/alchimist/ui_qt/pages/can_brew.py:89 src/alchimist/ui_qt/pages/catalog.py:66
-#: src/alchimist/ui_qt/pages/catalog.py:290 src/alchimist/ui_qt/pages/catalog.py:296
+#: src/alchimist/ui_qt/pages/can_brew.py:89 src/alchimist/ui_qt/pages/catalog.py:67
+#: src/alchimist/ui_qt/pages/catalog.py:301 src/alchimist/ui_qt/pages/catalog.py:307
 #: src/alchimist/ui_qt/pages/journal.py:76 src/alchimist/ui_qt/pages/journal.py:82
 msgid "любой"
 msgstr "любой"
 
 #: src/alchimist/ui_qt/pages/can_brew.py:92 src/alchimist/ui_qt/pages/can_brew.py:392
-#: src/alchimist/ui_qt/pages/catalog.py:68 src/alchimist/ui_qt/pages/catalog.py:121
-#: src/alchimist/ui_qt/pages/catalog.py:298 src/alchimist/ui_qt/pages/catalog.py:349
-#: src/alchimist/ui_qt/pages/journal.py:91 src/alchimist/ui_qt/pages/journal.py:183
+#: src/alchimist/ui_qt/pages/catalog.py:69 src/alchimist/ui_qt/pages/catalog.py:125
+#: src/alchimist/ui_qt/pages/catalog.py:309 src/alchimist/ui_qt/pages/catalog.py:374
+#: src/alchimist/ui_qt/pages/journal.py:91 src/alchimist/ui_qt/pages/journal.py:185
 msgid "любое"
 msgstr "любое"
 
@@ -706,67 +777,67 @@ msgstr "Очистить очередь"
 msgid "Убрать из очереди все записи?"
 msgstr "Убрать из очереди все записи?"
 
-#: src/alchimist/ui_qt/pages/catalog.py:66
+#: src/alchimist/ui_qt/pages/catalog.py:67
 msgid "Элемент"
 msgstr "Элемент"
 
-#: src/alchimist/ui_qt/pages/catalog.py:68
+#: src/alchimist/ui_qt/pages/catalog.py:69
 msgid "Место"
 msgstr "Место"
 
-#: src/alchimist/ui_qt/pages/catalog.py:69
+#: src/alchimist/ui_qt/pages/catalog.py:70
 msgid "Только «Травы»"
 msgstr "Только «Травы»"
 
-#: src/alchimist/ui_qt/pages/catalog.py:70 src/alchimist/ui_qt/pages/catalog.py:300
+#: src/alchimist/ui_qt/pages/catalog.py:71 src/alchimist/ui_qt/pages/catalog.py:311
 msgid "Показывать скрытые"
 msgstr "Показывать скрытые"
 
-#: src/alchimist/ui_qt/pages/catalog.py:94 src/alchimist/ui_qt/pages/catalog.py:326
-#: src/alchimist/ui_qt/pages/potions.py:118 src/alchimist/ui_qt/pages/reagents.py:140
+#: src/alchimist/ui_qt/pages/catalog.py:97 src/alchimist/ui_qt/pages/catalog.py:339
+#: src/alchimist/ui_qt/pages/potions.py:118 src/alchimist/ui_qt/pages/reagents.py:142
 msgid "Добавить…"
 msgstr "Добавить…"
 
-#: src/alchimist/ui_qt/pages/catalog.py:95 src/alchimist/ui_qt/pages/catalog.py:327
+#: src/alchimist/ui_qt/pages/catalog.py:98 src/alchimist/ui_qt/pages/catalog.py:340
 msgid "Изменить…"
 msgstr "Изменить…"
 
-#: src/alchimist/ui_qt/pages/catalog.py:96 src/alchimist/ui_qt/pages/catalog.py:328
+#: src/alchimist/ui_qt/pages/catalog.py:99 src/alchimist/ui_qt/pages/catalog.py:341
 msgid "Скрыть / показать"
 msgstr "Скрыть / показать"
 
-#: src/alchimist/ui_qt/pages/catalog.py:97 src/alchimist/ui_qt/pages/catalog.py:264
-#: src/alchimist/ui_qt/pages/catalog.py:329 src/alchimist/ui_qt/pages/catalog.py:494
+#: src/alchimist/ui_qt/pages/catalog.py:100 src/alchimist/ui_qt/pages/catalog.py:275
+#: src/alchimist/ui_qt/pages/catalog.py:342 src/alchimist/ui_qt/pages/catalog.py:551
 msgid "Удалить"
 msgstr "Удалить"
 
-#: src/alchimist/ui_qt/pages/catalog.py:188
+#: src/alchimist/ui_qt/pages/catalog.py:199
 msgid "Травы"
 msgstr "Травы"
 
-#: src/alchimist/ui_qt/pages/catalog.py:193
+#: src/alchimist/ui_qt/pages/catalog.py:204
 msgid "Места"
 msgstr "Места"
 
-#: src/alchimist/ui_qt/pages/catalog.py:206
+#: src/alchimist/ui_qt/pages/catalog.py:217
 #, python-brace-format
 msgid " и ещё {n}"
 msgstr " и ещё {n}"
 
-#: src/alchimist/ui_qt/pages/catalog.py:207
+#: src/alchimist/ui_qt/pages/catalog.py:218
 msgid "Может участвовать в рецептах"
 msgstr "Может участвовать в рецептах"
 
-#: src/alchimist/ui_qt/pages/catalog.py:236 src/alchimist/ui_qt/pages/reagents.py:107
-#: src/alchimist/ui_qt/pages/reagents.py:290
+#: src/alchimist/ui_qt/pages/catalog.py:247 src/alchimist/ui_qt/pages/reagents.py:109
+#: src/alchimist/ui_qt/pages/reagents.py:294
 msgid "Сохранено с замечаниями"
 msgstr "Сохранено с замечаниями"
 
-#: src/alchimist/ui_qt/pages/catalog.py:254 src/alchimist/ui_qt/pages/catalog.py:484
+#: src/alchimist/ui_qt/pages/catalog.py:265 src/alchimist/ui_qt/pages/catalog.py:541
 msgid "Удалить нельзя"
 msgstr "Удалить нельзя"
 
-#: src/alchimist/ui_qt/pages/catalog.py:256 src/alchimist/ui_qt/pages/catalog.py:486
+#: src/alchimist/ui_qt/pages/catalog.py:267 src/alchimist/ui_qt/pages/catalog.py:543
 #, python-brace-format
 msgid ""
 "«{name}» есть в инвентаре или журнале, поэтому удалить его нельзя.\n"
@@ -775,25 +846,58 @@ msgstr ""
 "«{name}» есть в инвентаре или журнале, поэтому удалить его нельзя.\n"
 "Скрыть вместо удаления?"
 
-#: src/alchimist/ui_qt/pages/catalog.py:264 src/alchimist/ui_qt/pages/catalog.py:494
+#: src/alchimist/ui_qt/pages/catalog.py:275 src/alchimist/ui_qt/pages/catalog.py:551
 #, python-brace-format
 msgid "Удалить «{name}» из справочника?"
 msgstr "Удалить «{name}» из справочника?"
 
-#: src/alchimist/ui_qt/pages/catalog.py:296
+#: src/alchimist/ui_qt/pages/catalog.py:307
 msgid "известен"
 msgstr "известен"
 
-#: src/alchimist/ui_qt/pages/catalog.py:296 src/alchimist/ui_qt/pages/catalog.py:383
-#: src/alchimist/ui_qt/pages/catalog.py:433 src/alchimist/ui_qt/pages/potions.py:208
+#: src/alchimist/ui_qt/pages/catalog.py:307 src/alchimist/ui_qt/pages/catalog.py:453
+#: src/alchimist/ui_qt/pages/catalog.py:490 src/alchimist/ui_qt/pages/potions.py:208
 msgid "неизвестен"
 msgstr "неизвестен"
 
-#: src/alchimist/ui_qt/pages/catalog.py:511
+#: src/alchimist/ui_qt/pages/catalog.py:349
+msgid "Изучить рецепт"
+msgstr "Изучить рецепт"
+
+#: src/alchimist/ui_qt/pages/catalog.py:350
+msgid "Рецепт узнали в игре — теперь он работает в подборе"
+msgstr "Рецепт узнали в игре — теперь он работает в подборе"
+
+#: src/alchimist/ui_qt/pages/catalog.py:352 src/alchimist/ui_qt/pages/catalog.py:572
+msgid "Забыть рецепт"
+msgstr "Забыть рецепт"
+
+#: src/alchimist/ui_qt/pages/catalog.py:354
+msgid "Показывать неизученные"
+msgstr "Показывать неизученные"
+
+#: src/alchimist/ui_qt/pages/catalog.py:355
+msgid "Показывать зелья, чей рецепт персонаж ещё не изучил"
+msgstr "Показывать зелья, чей рецепт персонаж ещё не изучил"
+
+#: src/alchimist/ui_qt/pages/catalog.py:452 src/alchimist/ui_qt/pages/catalog.py:485
+msgid "не изучен"
+msgstr "не изучен"
+
+#: src/alchimist/ui_qt/pages/catalog.py:486
+msgid "изучите его кнопкой «Изучить рецепт», когда узнаете в игре"
+msgstr "изучите его кнопкой «Изучить рецепт», когда узнаете в игре"
+
+#: src/alchimist/ui_qt/pages/catalog.py:573
+#, python-brace-format
+msgid "Забыть рецепт «{name}»? Изучить его снова можно в любой момент."
+msgstr "Забыть рецепт «{name}»? Изучить его снова можно в любой момент."
+
+#: src/alchimist/ui_qt/pages/catalog.py:596
 msgid "Зелья"
 msgstr "Зелья"
 
-#: src/alchimist/ui_qt/pages/catalog.py:515
+#: src/alchimist/ui_qt/pages/catalog.py:600
 msgid "Справочник партии"
 msgstr "Справочник партии"
 
@@ -857,42 +961,42 @@ msgstr "Вернуть реагенты и убрать полученное —
 msgid "Отменённые варки остаются в журнале зачёркнутыми."
 msgstr "Отменённые варки остаются в журнале зачёркнутыми."
 
-#: src/alchimist/ui_qt/pages/journal.py:278 src/alchimist/ui_qt/pages/lab.py:398
+#: src/alchimist/ui_qt/pages/journal.py:280 src/alchimist/ui_qt/pages/lab.py:398
 #, python-brace-format
 msgid "Лишние эссенции: {excess}"
 msgstr "Лишние эссенции: {excess}"
 
-#: src/alchimist/ui_qt/pages/journal.py:301
+#: src/alchimist/ui_qt/pages/journal.py:303
 msgid "Нечего сохранять"
 msgstr "Нечего сохранять"
 
-#: src/alchimist/ui_qt/pages/journal.py:301
+#: src/alchimist/ui_qt/pages/journal.py:303
 msgid "Выберите удачную варку с получившимся зельем."
 msgstr "Выберите удачную варку с получившимся зельем."
 
-#: src/alchimist/ui_qt/pages/journal.py:312
+#: src/alchimist/ui_qt/pages/journal.py:314
 msgid "Рецепт сохранён с предупреждениями"
 msgstr "Рецепт сохранён с предупреждениями"
 
-#: src/alchimist/ui_qt/pages/journal.py:318 src/alchimist/ui_qt/pages/settings.py:185
-#: src/alchimist/ui_qt/pages/settings.py:196 src/alchimist/ui_qt/pages/settings.py:225
+#: src/alchimist/ui_qt/pages/journal.py:320 src/alchimist/ui_qt/pages/settings.py:288
+#: src/alchimist/ui_qt/pages/settings.py:303 src/alchimist/ui_qt/pages/settings.py:332
 msgid "Готово"
 msgstr "Готово"
 
-#: src/alchimist/ui_qt/pages/journal.py:319
+#: src/alchimist/ui_qt/pages/journal.py:321
 #, python-brace-format
 msgid "Рецепт «{name}» записан."
 msgstr "Рецепт «{name}» записан."
 
-#: src/alchimist/ui_qt/pages/journal.py:330
+#: src/alchimist/ui_qt/pages/journal.py:332
 msgid "Отменить разбор"
 msgstr "Отменить разбор"
 
-#: src/alchimist/ui_qt/pages/journal.py:331
+#: src/alchimist/ui_qt/pages/journal.py:333
 msgid "Вернуть реагенты и забрать полученные эссенции?"
 msgstr "Вернуть реагенты и забрать полученные эссенции?"
 
-#: src/alchimist/ui_qt/pages/journal.py:333
+#: src/alchimist/ui_qt/pages/journal.py:335
 msgid "Вернуть реагенты и убрать полученное зелье?"
 msgstr "Вернуть реагенты и убрать полученное зелье?"
 
@@ -933,7 +1037,7 @@ msgid "Котёл"
 msgstr "Котёл"
 
 #: src/alchimist/ui_qt/pages/lab.py:110 src/alchimist/ui_qt/pages/lab.py:201
-#: src/alchimist/ui_qt/pages/potions.py:124 src/alchimist/ui_qt/pages/reagents.py:147
+#: src/alchimist/ui_qt/pages/potions.py:124 src/alchimist/ui_qt/pages/reagents.py:149
 msgid "Штук"
 msgstr "Штук"
 
@@ -1063,7 +1167,7 @@ msgstr "Добавить зелье"
 msgid "Начните вводить название…"
 msgstr "Начните вводить название…"
 
-#: src/alchimist/ui_qt/pages/potions.py:61 src/alchimist/ui_qt/pages/reagents.py:67
+#: src/alchimist/ui_qt/pages/potions.py:61 src/alchimist/ui_qt/pages/reagents.py:69
 msgid "Сколько"
 msgstr "Сколько"
 
@@ -1079,15 +1183,15 @@ msgstr "Использовать"
 msgid "−1 шт. и запись в журнал"
 msgstr "−1 шт. и запись в журнал"
 
-#: src/alchimist/ui_qt/pages/potions.py:147 src/alchimist/ui_qt/pages/reagents.py:158
+#: src/alchimist/ui_qt/pages/potions.py:147 src/alchimist/ui_qt/pages/reagents.py:160
 msgid "−1"
 msgstr "−1"
 
-#: src/alchimist/ui_qt/pages/potions.py:147 src/alchimist/ui_qt/pages/reagents.py:158
+#: src/alchimist/ui_qt/pages/potions.py:147 src/alchimist/ui_qt/pages/reagents.py:160
 msgid "+1"
 msgstr "+1"
 
-#: src/alchimist/ui_qt/pages/potions.py:151 src/alchimist/ui_qt/pages/reagents.py:165
+#: src/alchimist/ui_qt/pages/potions.py:151 src/alchimist/ui_qt/pages/reagents.py:167
 msgid "Заметка…"
 msgstr "Заметка…"
 
@@ -1099,7 +1203,7 @@ msgstr "«Использовать» уменьшает количество н�
 msgid "рецепт"
 msgstr "рецепт"
 
-#: src/alchimist/ui_qt/pages/potions.py:244 src/alchimist/ui_qt/pages/reagents.py:271
+#: src/alchimist/ui_qt/pages/potions.py:244 src/alchimist/ui_qt/pages/reagents.py:275
 msgid "Заметка к позиции"
 msgstr "Заметка к позиции"
 
@@ -1111,44 +1215,72 @@ msgstr "Добавить реагент"
 msgid "Нет такого — создать реагент"
 msgstr "Нет такого — создать реагент"
 
-#: src/alchimist/ui_qt/pages/reagents.py:134
+#: src/alchimist/ui_qt/pages/reagents.py:136
 msgid "Реагенты в сумке"
 msgstr "Реагенты в сумке"
 
-#: src/alchimist/ui_qt/pages/reagents.py:147
+#: src/alchimist/ui_qt/pages/reagents.py:149
 msgid "В очереди"
 msgstr "В очереди"
 
-#: src/alchimist/ui_qt/pages/reagents.py:162
+#: src/alchimist/ui_qt/pages/reagents.py:164
 msgid "Указать число…"
 msgstr "Указать число…"
 
-#: src/alchimist/ui_qt/pages/reagents.py:168
+#: src/alchimist/ui_qt/pages/reagents.py:170
 msgid "Карточка…"
 msgstr "Карточка…"
 
-#: src/alchimist/ui_qt/pages/reagents.py:179
+#: src/alchimist/ui_qt/pages/reagents.py:171
+msgid "Поправить реагент в справочнике (только GM)"
+msgstr "Поправить реагент в справочнике (только GM)"
+
+#: src/alchimist/ui_qt/pages/reagents.py:182
 msgid "Всего единиц элементов в сумке:"
 msgstr "Всего единиц элементов в сумке:"
 
-#: src/alchimist/ui_qt/pages/reagents.py:181
+#: src/alchimist/ui_qt/pages/reagents.py:184
 msgid "Количество 0 убирает строку из списка."
 msgstr "Количество 0 убирает строку из списка."
 
-#: src/alchimist/ui_qt/pages/reagents.py:219
+#: src/alchimist/ui_qt/pages/reagents.py:223
 #, python-brace-format
 msgid "Отложено под очередь: {taken} из {total}"
 msgstr "Отложено под очередь: {taken} из {total}"
 
-#: src/alchimist/ui_qt/pages/reagents.py:252
+#: src/alchimist/ui_qt/pages/reagents.py:256
 msgid "Сколько штук"
 msgstr "Сколько штук"
 
-#: src/alchimist/ui_qt/pages/settings.py:42
-msgid "Наборы инструментов"
-msgstr "Наборы инструментов"
+#: src/alchimist/ui_qt/pages/settings.py:44
+msgid "Персонаж"
+msgstr "Персонаж"
+
+#: src/alchimist/ui_qt/pages/settings.py:48
+msgid "Активный персонаж"
+msgstr "Активный персонаж"
 
 #: src/alchimist/ui_qt/pages/settings.py:53
+msgid "Новый…"
+msgstr "Новый…"
+
+#: src/alchimist/ui_qt/pages/settings.py:55
+msgid "Переименовать…"
+msgstr "Переименовать…"
+
+#: src/alchimist/ui_qt/pages/settings.py:57
+msgid "Удалить…"
+msgstr "Удалить…"
+
+#: src/alchimist/ui_qt/pages/settings.py:65
+msgid ""
+"У каждого персонажа свои наборы, реагенты, зелья, журнал и изученные рецепты. "
+"Справочник общий."
+msgstr ""
+"У каждого персонажа свои наборы, реагенты, зелья, журнал и изученные рецепты. "
+"Справочник общий."
+
+#: src/alchimist/ui_qt/pages/settings.py:85
 msgid ""
 "Можно выбрать несколько. Вариант доступен, если его разрешает хотя бы один набор, но "
 "смешивать права разных наборов в одной варке нельзя (П-6.3)."
@@ -1156,96 +1288,125 @@ msgstr ""
 "Можно выбрать несколько. Вариант доступен, если его разрешает хотя бы один набор, но "
 "смешивать права разных наборов в одной варке нельзя (П-6.3)."
 
-#: src/alchimist/ui_qt/pages/settings.py:60
-msgid "Персонаж"
-msgstr "Персонаж"
+#: src/alchimist/ui_qt/pages/settings.py:93
+msgid "Оформление"
+msgstr "Оформление"
 
-#: src/alchimist/ui_qt/pages/settings.py:64
-msgid "Имя персонажа"
-msgstr "Имя персонажа"
-
-#: src/alchimist/ui_qt/pages/settings.py:69
-msgid "Тема оформления"
-msgstr "Тема оформления"
-
-#: src/alchimist/ui_qt/pages/settings.py:74
+#: src/alchimist/ui_qt/pages/settings.py:104
 msgid "Данные"
 msgstr "Данные"
 
-#: src/alchimist/ui_qt/pages/settings.py:85
+#: src/alchimist/ui_qt/pages/settings.py:115
 msgid "Открыть папку"
 msgstr "Открыть папку"
 
-#: src/alchimist/ui_qt/pages/settings.py:88
+#: src/alchimist/ui_qt/pages/settings.py:118
 msgid "Резервная копия в zip…"
 msgstr "Резервная копия в zip…"
 
-#: src/alchimist/ui_qt/pages/settings.py:95
+#: src/alchimist/ui_qt/pages/settings.py:125
 msgid "Справочник"
 msgstr "Справочник"
 
-#: src/alchimist/ui_qt/pages/settings.py:98
+#: src/alchimist/ui_qt/pages/settings.py:129
 msgid "Экспорт справочника…"
 msgstr "Экспорт справочника…"
 
-#: src/alchimist/ui_qt/pages/settings.py:101
+#: src/alchimist/ui_qt/pages/settings.py:132
 msgid "Импорт справочника…"
 msgstr "Импорт справочника…"
 
-#: src/alchimist/ui_qt/pages/settings.py:109
-msgid "При обмене передаются только ингредиенты и зелья: инвентарь и журнал остаются вашими."
-msgstr "При обмене передаются только ингредиенты и зелья: инвентарь и журнал остаются вашими."
+#: src/alchimist/ui_qt/pages/settings.py:140
+msgid ""
+"При обмене передаются только ингредиенты и зелья: инвентарь, журнал и изученные "
+"рецепты остаются вашими."
+msgstr ""
+"При обмене передаются только ингредиенты и зелья: инвентарь, журнал и изученные "
+"рецепты остаются вашими."
 
-#: src/alchimist/ui_qt/pages/settings.py:118
+#: src/alchimist/ui_qt/pages/settings.py:149
 msgid "Настройки"
 msgstr "Настройки"
 
-#: src/alchimist/ui_qt/pages/settings.py:139
+#: src/alchimist/ui_qt/pages/settings.py:176
+msgid "Это GM: знает все рецепты и один может менять справочник."
+msgstr "Это GM: знает все рецепты и один может менять справочник."
+
+#: src/alchimist/ui_qt/pages/settings.py:188
 #, python-brace-format
 msgid "Папка данных: {path}"
 msgstr "Папка данных: {path}"
 
-#: src/alchimist/ui_qt/pages/settings.py:140
+#: src/alchimist/ui_qt/pages/settings.py:189
 #, python-brace-format
 msgid "Настройки: {path}"
 msgstr "Настройки: {path}"
 
-#: src/alchimist/ui_qt/pages/settings.py:145
+#: src/alchimist/ui_qt/pages/settings.py:200
 #, python-brace-format
-msgid "В справочнике: {ingredients} реагентов, {potions} зелий, {known} известных рецептов"
-msgstr "В справочнике: {ingredients} реагентов, {potions} зелий, {known} известных рецептов"
+msgid ""
+"В справочнике: {ingredients} реагентов, {potions} зелий, {recipes} рецептов. Изучено:"
+" {known}."
+msgstr ""
+"В справочнике: {ingredients} реагентов, {potions} зелий, {recipes} рецептов. Изучено:"
+" {known}."
 
-#: src/alchimist/ui_qt/pages/settings.py:176
+#: src/alchimist/ui_qt/pages/settings.py:231
+msgid "Переименовать персонажа"
+msgstr "Переименовать персонажа"
+
+#: src/alchimist/ui_qt/pages/settings.py:231
+msgid "Новое имя"
+msgstr "Новое имя"
+
+#: src/alchimist/ui_qt/pages/settings.py:246
+msgid "Удалить персонажа"
+msgstr "Удалить персонажа"
+
+#: src/alchimist/ui_qt/pages/settings.py:248
+#, python-brace-format
+msgid ""
+"Удалить «{name}» вместе с его реагентами, зельями, журналом и изученными рецептами?\n"
+"\n"
+"Файлы не стираются насовсем, а переносятся в папку deleted-profiles внутри папки "
+"данных."
+msgstr ""
+"Удалить «{name}» вместе с его реагентами, зельями, журналом и изученными рецептами?\n"
+"\n"
+"Файлы не стираются насовсем, а переносятся в папку deleted-profiles внутри папки "
+"данных."
+
+#: src/alchimist/ui_qt/pages/settings.py:279
 msgid "Резервная копия"
 msgstr "Резервная копия"
 
-#: src/alchimist/ui_qt/pages/settings.py:185
+#: src/alchimist/ui_qt/pages/settings.py:288
 #, python-brace-format
 msgid "Копия сохранена: {path}"
 msgstr "Копия сохранена: {path}"
 
-#: src/alchimist/ui_qt/pages/settings.py:190
+#: src/alchimist/ui_qt/pages/settings.py:293
 msgid "Экспорт справочника"
 msgstr "Экспорт справочника"
 
-#: src/alchimist/ui_qt/pages/settings.py:196
+#: src/alchimist/ui_qt/pages/settings.py:303
 #, python-brace-format
 msgid "Справочник выгружен: {path}"
 msgstr "Справочник выгружен: {path}"
 
-#: src/alchimist/ui_qt/pages/settings.py:211
+#: src/alchimist/ui_qt/pages/settings.py:318
 msgid "Ничего нового"
 msgstr "Ничего нового"
 
-#: src/alchimist/ui_qt/pages/settings.py:211
+#: src/alchimist/ui_qt/pages/settings.py:318
 msgid "Справочники совпадают полностью."
 msgstr "Справочники совпадают полностью."
 
-#: src/alchimist/ui_qt/pages/settings.py:221
+#: src/alchimist/ui_qt/pages/settings.py:328
 msgid "Справочник обновлён, но есть замечания"
 msgstr "Справочник обновлён, но есть замечания"
 
-#: src/alchimist/ui_qt/pages/settings.py:225
+#: src/alchimist/ui_qt/pages/settings.py:332
 msgid "Справочник обновлён."
 msgstr "Справочник обновлён."
 

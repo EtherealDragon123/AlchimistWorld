@@ -25,6 +25,7 @@ CURRENT_VERSIONS: dict[str, int] = {
     "queue": 1,
     "settings": 1,
     "catalog-export": 1,
+    "character": 1,
 }
 
 Migration = Callable[[dict[str, Any]], dict[str, Any]]
@@ -70,6 +71,7 @@ MIGRATIONS: dict[str, dict[int, Migration]] = {
     "queue": {},
     "settings": {},
     "catalog-export": {},
+    "character": {},
 }
 
 

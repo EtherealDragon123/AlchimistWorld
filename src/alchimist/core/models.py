@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from collections.abc import Mapping
+from collections.abc import Iterable, Mapping
 from dataclasses import dataclass, field, replace
 from datetime import datetime
 from enum import IntEnum, StrEnum
@@ -444,3 +444,62 @@ class Catalog:
 
     def potion_by_id(self, potion_id: str) -> Potion | None:
         return next((p for p in self.potions if p.id == potion_id), None)
+
+
+# ── Персонажи ─────────────────────────────────────────────────────────────────
+class Role(StrEnum):
+    """Кто сидит за персонажем: игрок или мастер."""
+
+    PLAYER = "player"
+    GM = "gm"
+
+
+#: Имя, которое при создании персонажа добавляет встроенный GM-аккаунт.
+#: Регистр не важен: «GM», «gm» и «Gm» — одно и то же.
+GM_NAME = "GM"
+
+#: Каталог профиля GM. Других персонажей с таким `id` не бывает.
+GM_ID = "gm"
+
+
+def is_gm_name(name: str) -> bool:
+    return name.strip().casefold() == GM_NAME.casefold()
+
+
+@dataclass(frozen=True, slots=True)
+class Character:
+    """Персонаж: свои наборы, инвентарь, журнал и изученные рецепты.
+
+    `id` — имя папки профиля, при переименовании не меняется. GM знает все рецепты
+    и единственный может менять справочник; у игрока работают только рецепты из
+    `known_recipes`, остальные он изучает сам, кнопкой.
+    """
+
+    id: str
+    name: str
+    role: Role = Role.PLAYER
+    kits: tuple[Kit, ...] = (Kit.ALCHEMIST,)
+    known_recipes: frozenset[str] = frozenset()
+    #: Показывать ли в справочнике зелья, чей рецепт персонаж ещё не изучил.
+    show_unknown: bool = True
+
+    def __post_init__(self) -> None:
+        object.__setattr__(self, "role", coerce_enum(Role, self.role, Role.PLAYER))
+        kits = tuple(k for k in (coerce_enum(Kit, k) for k in self.kits) if k is not None)
+        object.__setattr__(self, "kits", kits or (Kit.ALCHEMIST,))
+        object.__setattr__(self, "known_recipes", frozenset(self.known_recipes))
+
+    @property
+    def is_gm(self) -> bool:
+        return self.role is Role.GM
+
+    def knows(self, potion_id: str) -> bool:
+        return self.is_gm or potion_id in self.known_recipes
+
+    def with_(self, **changes: object) -> Character:
+        return replace(self, **changes)  # type: ignore[arg-type]
+
+
+def starter_recipes(potions: Iterable[Potion]) -> frozenset[str]:
+    """Что новый персонаж знает с самого начала: рецепты всех обычных зелий."""
+    return frozenset(p.id for p in potions if p.rarity is Rarity.COMMON and p.recipe is not None)

@@ -102,6 +102,11 @@ _TEMPLATES: dict[str, str] = {
         "Файл {path} записан версией формата {version}, приложение понимает {supported}"
     ),
     ErrorCode.EXCHANGE_BAD_FORMAT: "Это не файл обмена справочником",
+    ErrorCode.GM_ONLY: "Справочник может менять и выгружать только GM",
+    ErrorCode.NAME_RESERVED: "Имя «{name}» зарезервировано, выберите другое",
+    ErrorCode.NO_CHARACTER: "Сначала создайте персонажа",
+    ErrorCode.LAST_CHARACTER: "Нельзя удалить единственного персонажа",
+    ErrorCode.RECIPE_UNKNOWN: "Рецепт «{name}» пока не знает никто, изучать нечего",
 }
 
 

@@ -18,6 +18,7 @@ from alchimist.core.models import (
     Rarity,
     Recipe,
 )
+from alchimist.data import BUILTIN_CATALOG
 
 
 def ing(
@@ -170,9 +171,9 @@ def catalog(ingredients: dict[str, Ingredient], potions: dict[str, Potion]) -> C
 
 @pytest.fixture(scope="session")
 def campaign_file() -> Path:
-    """Справочник настоящей кампании, выгруженный из приложения (FR-10.2).
+    """Справочник настоящей кампании — тот, что встроен в приложение (FR-14.2).
 
     На нём сценарии, консоль и замеры скорости идут на живых данных: 63 реагента,
     139 зелий, 25 известных рецептов. Загружается так же, как у игроков, — обменом.
     """
-    return Path(__file__).resolve().parent / "alchimist-catalog.json"
+    return BUILTIN_CATALOG

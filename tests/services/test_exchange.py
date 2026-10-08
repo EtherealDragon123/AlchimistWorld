@@ -25,7 +25,6 @@ def other(tmp_path, catalog) -> AppService:
 
 
 def test_export_file_shape(app: AppService, tmp_path) -> None:
-    app.settings.set_character_name("Гримли")
     path = app.exchange.export(tmp_path / "catalog.json", "Гримли")
     data = json.loads(path.read_text(encoding="utf-8"))
 

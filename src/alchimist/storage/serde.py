@@ -12,11 +12,13 @@ from alchimist.core.models import (
     BaseType,
     BrewQueue,
     BrewResult,
+    Character,
     Ingredient,
     IngredientCategory,
     Inventory,
     JournalEntry,
     JournalEntryType,
+    Kit,
     Outcome,
     Potion,
     PotionKind,
@@ -26,6 +28,7 @@ from alchimist.core.models import (
     ReagentStack,
     Recipe,
     ResultKind,
+    Role,
 )
 from alchimist.storage.migrations import CURRENT_VERSIONS
 
@@ -314,4 +317,37 @@ def entry_from_dict(data: dict[str, Any], path: str = "") -> JournalEntry:
             undone=bool(data.get("undone", False)),
         )
     except (KeyError, TypeError, ValueError) as exc:
+        raise StorageError(ErrorCode.STORAGE_CORRUPT, path=path, reason=str(exc)) from exc
+
+
+# ── Персонаж (03 §6.12) ───────────────────────────────────────────────────────
+def character_to_dict(character: Character) -> dict[str, Any]:
+    """`id` не пишется: это имя папки профиля, и расходиться им незачем."""
+    return {
+        "schema_version": CURRENT_VERSIONS["character"],
+        "name": character.name,
+        "role": str(character.role.value),
+        "kits": [str(k.value) for k in character.kits],
+        "known_recipes": sorted(character.known_recipes),
+        "show_unknown": character.show_unknown,
+    }
+
+
+def character_from_dict(data: dict[str, Any], character_id: str, path: str = "") -> Character:
+    try:
+        kits = []
+        for raw in data.get("kits", []):
+            try:
+                kits.append(Kit(raw))
+            except ValueError:
+                continue  # набор из будущей версии — пропускаем, как и в settings.toml
+        return Character(
+            id=character_id,
+            name=str(data.get("name") or character_id),
+            role=_enum(Role, data.get("role", Role.PLAYER.value), Role.PLAYER, path),
+            kits=tuple(kits),
+            known_recipes=frozenset(str(i) for i in data.get("known_recipes", [])),
+            show_unknown=bool(data.get("show_unknown", True)),
+        )
+    except (TypeError, ValueError) as exc:
         raise StorageError(ErrorCode.STORAGE_CORRUPT, path=path, reason=str(exc)) from exc

@@ -49,6 +49,19 @@ def ui_app(tmp_path, catalog, qapp):
 
 
 @pytest.fixture
+def play_as(ui_app):
+    """Сделать активным игрока, который знает все рецепты справочника (FR-14.5)."""
+    from alchimist.core.models import Kit
+
+    def play(name: str = "Гримли", kits: tuple = (Kit.ALCHEMIST,)):
+        return ui_app.create_character(
+            name, kits, known=ui_app.catalog.recipe_ids(), seed_catalog=False
+        )
+
+    return play
+
+
+@pytest.fixture
 def window(ui_app, qapp):
     from alchimist.ui_qt.main_window import MainWindow
 

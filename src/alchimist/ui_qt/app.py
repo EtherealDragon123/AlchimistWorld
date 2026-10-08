@@ -11,7 +11,7 @@ from PySide6.QtWidgets import QApplication, QMessageBox
 
 from alchimist.core.errors import AlchimistError
 from alchimist.i18n import describe, set_language
-from alchimist.services import build_app
+from alchimist.services import AppService, build_app
 from alchimist.ui_qt.resources import app_icon_path
 from alchimist.ui_qt.theme import apply_theme
 
@@ -29,6 +29,21 @@ def _install_qt_translations(app: QApplication, language: str) -> list[QTranslat
             app.installTranslator(translator)
             translators.append(translator)
     return translators
+
+
+def first_run(services: AppService) -> bool:
+    """FR-14.1: персонажа ещё нет — сначала окно создания. False — пользователь вышел."""
+    from alchimist.ui_qt.dialogs.character_dialog import CharacterDialog
+
+    dialog = CharacterDialog(
+        lambda name, kits: services.create_character(name, kits),
+        first_run=True,
+        theme=services.settings.theme,
+    )
+    if not dialog.exec():
+        return False
+    services.settings.set_theme(dialog.theme())
+    return True
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -61,6 +76,9 @@ def main(argv: list[str] | None = None) -> int:
     language = set_language()
     app.setProperty("qt_translators", _install_qt_translations(app, language))
     apply_theme(app, services.settings.theme)
+
+    if not services.characters.has_characters and not first_run(services):
+        return 0
 
     from alchimist.ui_qt.main_window import MainWindow
 

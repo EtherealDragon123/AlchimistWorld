@@ -6,6 +6,7 @@ from PySide6.QtCore import QObject, Signal
 
 from alchimist.services.events import (
     CatalogChanged,
+    CharacterChanged,
     EventBus,
     InventoryChanged,
     JournalChanged,
@@ -22,6 +23,7 @@ class ServiceBridge(QObject):
     journal_changed = Signal(object)
     queue_changed = Signal(object)
     settings_changed = Signal(object)
+    character_changed = Signal(object)
 
     def __init__(self, bus: EventBus, parent: QObject | None = None) -> None:
         super().__init__(parent)
@@ -32,6 +34,7 @@ class ServiceBridge(QObject):
             bus.subscribe(JournalChanged, self.journal_changed.emit),
             bus.subscribe(QueueChanged, self.queue_changed.emit),
             bus.subscribe(SettingsChanged, self.settings_changed.emit),
+            bus.subscribe(CharacterChanged, self.character_changed.emit),
         ]
 
     def disconnect_bus(self) -> None:

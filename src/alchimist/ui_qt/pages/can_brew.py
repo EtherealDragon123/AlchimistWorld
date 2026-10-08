@@ -245,7 +245,7 @@ class CanBrewPage(Page):
     def refresh(self) -> None:
         super().refresh()
         self._refresh_queue()
-        kits = ", ".join(KIT_NAMES_RU[k] for k in self.app.settings.kits)
+        kits = ", ".join(KIT_NAMES_RU[k] for k in self.app.characters.kits)
         self.kits_label.setText(_("Набор: {kits}").format(kits=kits))
 
         self._refresh_families()

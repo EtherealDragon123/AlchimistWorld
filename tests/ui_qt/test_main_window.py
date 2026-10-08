@@ -98,8 +98,8 @@ def test_lab_updates_sum_and_hint(window, ui_app) -> None:
     assert page.cauldron == {"tkanevyy-list": 1}
 
 
-def test_lab_warns_when_kit_forbids(window, ui_app) -> None:
-    ui_app.settings.set_kits((Kit.HERBALIST,))
+def test_lab_warns_when_kit_forbids(window, ui_app, play_as) -> None:
+    play_as(kits=(Kit.HERBALIST,))
     ui_app.inventory.set_reagent("tusklaya-essentsiya-ognya", 1)
     page = next(p for p in window.pages if isinstance(p, LabPage))
     window.go_to(LabPage)
@@ -192,20 +192,23 @@ def test_journal_page_shows_brew(window, ui_app) -> None:
     assert "Алхимический Огонь" in item.text(6)
 
 
-def test_settings_page_kits_roundtrip(window, ui_app) -> None:
+def test_settings_page_kits_roundtrip(window, ui_app, play_as) -> None:
+    play_as()
     page = next(p for p in window.pages if isinstance(p, SettingsPage))
     window.go_to(SettingsPage)
     page.kit_checks[Kit.HERBALIST].setChecked(True)
     page.kit_checks[Kit.ALCHEMIST].setChecked(False)
-    assert ui_app.settings.kits == (Kit.HERBALIST,)
+    assert ui_app.characters.kits == (Kit.HERBALIST,)
 
     ui_app.reload()
-    assert ui_app.settings.settings.kits == (Kit.HERBALIST,)
+    assert ui_app.characters.kits == (Kit.HERBALIST,)
 
 
-def test_window_title_follows_character_name(window, ui_app) -> None:
-    ui_app.settings.set_character_name("Гримли")
+def test_window_title_follows_character_name(window, ui_app, play_as) -> None:
+    character = play_as("Гримли")
     assert window.windowTitle() == "AlchimistWorld — Гримли"
+    ui_app.rename_character(character.id, "Гримли Второй")
+    assert window.windowTitle() == "AlchimistWorld — Гримли Второй"
 
 
 def test_status_bar_counts(window, ui_app) -> None:

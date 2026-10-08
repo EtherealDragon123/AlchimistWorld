@@ -42,13 +42,35 @@ def test_full_console_workflow(data_dir, capsys, campaign_file) -> None:
 
 
 def test_settings_roundtrip(data_dir, capsys) -> None:
-    assert run("settings", "--kits", "herbalist", "poisoner", "--character", "Гримли") == 0
+    # Наборы и имя — у персонажа (FR-14.5): без него их некуда записать.
+    assert run("settings", "--kits", "herbalist") == 1
+    assert run("new-character", "Гримли", "--kits", "herbalist") == 0
+    assert run("settings", "--kits", "herbalist", "poisoner", "--character", "Гримли Второй") == 0
     out = capsys.readouterr().out
     assert "Набор травника" in out
-    assert "Гримли" in out
+    assert "Гримли Второй" in out
 
     assert run("settings") == 0
     assert "Инструменты отравителя" in capsys.readouterr().out
+
+
+def test_characters_and_learning(data_dir, capsys) -> None:
+    """FR-14.x в консоли: два персонажа, GM по имени, изучение рецепта."""
+    assert run("new-character", "Гримли") == 0
+    assert run("learn", "Пламя Саламандры") == 0
+    assert "Вязкая · Огонь×2, Свет×1" in capsys.readouterr().out
+
+    assert run("export", str(data_dir / "x.json")) == 1  # игрок справочник не выгружает
+    assert run("new-character", "gm") == 0
+    assert run("export", str(data_dir / "x.json")) == 0
+
+    assert run("switch", "Гримли") == 0
+    capsys.readouterr()
+    assert run("characters") == 0
+    out = capsys.readouterr().out
+    assert "* Гримли" in out
+    assert "рецептов 21/25" in out  # 20 обычных + изученное
+    assert "GM" in out
 
 
 def test_export_and_import_catalog(data_dir, tmp_path, capsys, campaign_file) -> None:

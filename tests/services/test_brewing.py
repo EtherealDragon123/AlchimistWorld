@@ -158,8 +158,8 @@ def test_lab_hint_remembers_previous_attempt(app: AppService) -> None:
     assert hint.history[0].result.kind is ResultKind.NOTHING
 
 
-def test_lab_hint_knows_which_kit_allows_it(app: AppService) -> None:
-    app.settings.set_kits((Kit.HERBALIST,))
+def test_lab_hint_knows_which_kit_allows_it(app: AppService, play_as) -> None:
+    play_as(kits=(Kit.HERBALIST,))
     hint = app.brewing.hint(BaseType.EXPLOSIVE, {"shcholkorekh": 2})
     assert hint.allowed_kits == ()  # травнику взрывная основа недоступна
     hint = app.brewing.hint(BaseType.LIQUID, {"tusklaya-essentsiya-ognya": 1})
@@ -231,11 +231,12 @@ def test_can_brew_updates_after_recipe_change(app: AppService) -> None:
     assert "barmaglot" in {r.potion.id for r in app.brewing.can_brew()}
 
 
-def test_kits_affect_can_brew(app: AppService) -> None:
+def test_kits_affect_can_brew(app: AppService, play_as) -> None:
+    play_as()
     app.inventory.set_reagent("tusklaya-essentsiya-ognya", 1)
     assert {r.potion.id for r in app.brewing.can_brew()} == {"alkhimicheskiy-ogon"}
 
-    app.settings.set_kits((Kit.HERBALIST,))
+    app.set_kits((Kit.HERBALIST,))
     assert app.brewing.can_brew() == []
 
 
