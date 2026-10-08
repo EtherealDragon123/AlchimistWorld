@@ -57,7 +57,7 @@ def potion(
     return Potion(id=ident, name=name, rarity=rarity, kind=kind, family=family, recipe=recipe)
 
 
-# ── Реагенты из Алхимия/Ингридиенты ──────────────────────────────────────────
+# ── Реагенты из справочника кампании ─────────────────────────────────────────
 H = IngredientCategory.HERB
 P = IngredientCategory.PLANT
 E = IngredientCategory.ESSENCE
