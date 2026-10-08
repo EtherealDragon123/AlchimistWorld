@@ -137,7 +137,37 @@ def test_brewing_from_queue_clears_the_entry(window, ui_app) -> None:
     assert ui_app.inventory.potion_qty("alkhimicheskiy-ogon") == 1
 
 
-# ── размеры кнопок ───────────────────────────────────────────────────────────
+# ── кнопки строки: рисует делегат ────────────────────────────────────────────
+def _button_rects(page, item):
+    """Где в ячейке нарисованы «Сварить» и «В очередь»."""
+    cell = page.tree.visualItemRect(item)
+    cell.setLeft(page.tree.header().sectionPosition(5))
+    cell.setWidth(page.tree.columnWidth(5))
+    return cell, page.row_buttons.button_rects(cell)
+
+
+def _needed_widths(page) -> list[int]:
+    """Сколько нужно каждой надписи — по настоящей кнопке с тем же текстом."""
+    from PySide6.QtWidgets import QPushButton
+
+    widths = []
+    for label in ("Сварить", "В очередь"):
+        probe = QPushButton(label, page)
+        probe.ensurePolished()
+        widths.append(probe.sizeHint().width())
+        probe.deleteLater()
+    return widths
+
+
+def _assert_buttons_fit(page) -> None:
+    item = page.tree.topLevelItem(0).child(0)
+    cell, rects = _button_rects(page, item)
+    assert len(rects) == 2
+    for rect, needed in zip(rects, _needed_widths(page), strict=True):
+        assert rect.width() >= needed
+        assert rect.right() <= cell.right(), "кнопка вылезла за колонку"
+
+
 @pytest.mark.parametrize("point_size", [9, 11, 14, 17])
 def test_row_buttons_are_never_clipped(window, ui_app, qapp, point_size) -> None:
     """Колонка с кнопками меряется по ним, а не прибита числом.
@@ -146,7 +176,6 @@ def test_row_buttons_are_never_clipped(window, ui_app, qapp, point_size) -> None
     ширина колонки была задана константой, подогнанной под один шрифт.
     """
     from PySide6.QtGui import QFont
-    from PySide6.QtWidgets import QPushButton
 
     original = QFont(qapp.font())
     try:
@@ -158,24 +187,13 @@ def test_row_buttons_are_never_clipped(window, ui_app, qapp, point_size) -> None
         page = _page(window, CanBrewPage)
         page._forget_actions_width()
         page.refresh()
-
-        top = page.tree.topLevelItem(0)
-        actions = page.tree.itemWidget(top.child(0), 5)
-        buttons = actions.findChildren(QPushButton)
-        assert len(buttons) == 2
-        for button in buttons:
-            assert button.width() >= button.sizeHint().width(), (
-                f"{button.text()!r} обрезана при {point_size}pt: "
-                f"дали {button.width()}, нужно {button.sizeHint().width()}"
-            )
+        _assert_buttons_fit(page)
     finally:
         qapp.setFont(original)
 
 
 def test_buttons_still_fit_after_theme_change(window, ui_app, qapp) -> None:
     """Тема меняет отступы кнопок — ширина колонки должна пересчитаться."""
-    from PySide6.QtWidgets import QPushButton
-
     from alchimist.core.models import Theme
     from alchimist.ui_qt.theme import apply_theme
 
@@ -185,6 +203,115 @@ def test_buttons_still_fit_after_theme_change(window, ui_app, qapp) -> None:
     for theme in (Theme.LIGHT, Theme.DARK):
         apply_theme(qapp, theme)
         page.refresh()
-        actions = page.tree.itemWidget(page.tree.topLevelItem(0).child(0), 5)
-        for button in actions.findChildren(QPushButton):
-            assert button.width() >= button.sizeHint().width(), (theme, button.text())
+        _assert_buttons_fit(page)
+
+
+def test_rows_have_no_button_widgets(window, ui_app) -> None:
+    """Ради этого и делегат: ни одного виджета на строку."""
+    ui_app.inventory.set_reagent("shcholkorekh", 2)
+    page = _page(window, CanBrewPage)
+    top = page.tree.topLevelItem(0)
+    assert page.tree.itemWidget(top.child(0), 5) is None
+    # У строки зелья кнопок нет — только у вариантов.
+    assert page.row_buttons.button_rects(page.tree.visualItemRect(top))  # прямоугольники считаются
+    assert not page.row_buttons._has_buttons(page.tree.indexFromItem(top, 5))
+    assert page.row_buttons._has_buttons(page.tree.indexFromItem(top.child(0), 5))
+
+
+def _click_button(qapp, page, item, number) -> None:
+    from PySide6.QtCore import Qt
+    from PySide6.QtTest import QTest
+
+    _cell, rects = _button_rects(page, item)
+    QTest.mouseClick(
+        page.tree.viewport(),
+        Qt.MouseButton.LeftButton,
+        Qt.KeyboardModifier.NoModifier,
+        rects[number].center(),
+    )
+    qapp.processEvents()
+
+
+def test_queue_button_click_enqueues(window, ui_app, qapp) -> None:
+    ui_app.inventory.set_reagent("shcholkorekh", 2)
+    page = _page(window, CanBrewPage)
+    item = page.tree.topLevelItem(0).child(0)
+    option = item.data(0, ROLE_OPTION)
+    _click_button(qapp, page, item, 1)
+    entries = ui_app.queue.queue.entries
+    assert [e.potion_id for e in entries] == [option.potion.id]
+
+
+def test_brew_button_click_opens_brewing(window, ui_app, qapp, monkeypatch) -> None:
+    ui_app.inventory.set_reagent("shcholkorekh", 2)
+    page = _page(window, CanBrewPage)
+    item = page.tree.topLevelItem(0).child(0)
+    brewed = []
+    monkeypatch.setattr(page, "_brew", lambda option: brewed.append(option))
+    _click_button(qapp, page, item, 0)
+    assert brewed == [item.data(0, ROLE_OPTION)]
+    assert ui_app.queue.queue.entries == ()  # «Сварить» в очередь ничего не ставит
+
+
+def test_click_beside_buttons_does_nothing(window, ui_app, qapp, monkeypatch) -> None:
+    from PySide6.QtCore import Qt
+    from PySide6.QtTest import QTest
+
+    ui_app.inventory.set_reagent("shcholkorekh", 2)
+    page = _page(window, CanBrewPage)
+    item = page.tree.topLevelItem(0).child(0)
+    monkeypatch.setattr(page, "_brew", lambda option: pytest.fail("нажата кнопка мимо неё"))
+    cell, rects = _button_rects(page, item)
+    beside = rects[-1].topRight()
+    beside.setX(cell.right() - 1)
+    QTest.mouseClick(
+        page.tree.viewport(), Qt.MouseButton.LeftButton, Qt.KeyboardModifier.NoModifier, beside
+    )
+    qapp.processEvents()
+    assert ui_app.queue.queue.entries == ()
+
+
+def test_refresh_keeps_list_focus(window, ui_app, qapp) -> None:
+    """Список больше не прячется на время заполнения — фокус с него не слетает."""
+    ui_app.inventory.set_reagent("shcholkorekh", 2)
+    page = _page(window, CanBrewPage)
+    page.tree.setFocus()
+    qapp.processEvents()
+    if not page.tree.hasFocus():
+        pytest.skip("окно без фокуса в этой среде")
+    page.refresh()
+    qapp.processEvents()
+    assert page.tree.hasFocus()
+
+
+def test_double_click_on_queue_button_is_two_clicks(window, ui_app, qapp, monkeypatch) -> None:
+    """Двойной щелчок по «В очередь» — два нажатия кнопки, а не двойной щелчок по строке.
+
+    Строку двойной щелчок варит, но по кнопке он должен остаться кнопке — как было,
+    пока кнопки были настоящими виджетами.
+    """
+    from PySide6.QtCore import Qt
+    from PySide6.QtTest import QTest
+
+    ui_app.inventory.set_reagent("shcholkorekh", 4)
+    page = _page(window, CanBrewPage)
+    opened = []
+    monkeypatch.setattr(page, "_brew", lambda option: opened.append(option))
+    page.tree.itemDoubleClicked.disconnect()
+    page.tree.itemDoubleClicked.connect(lambda *_a: opened.append("строка"))
+    item = page.tree.topLevelItem(0).child(0)
+    _cell, rects = _button_rects(page, item)
+    viewport, left, none = (
+        page.tree.viewport(),
+        Qt.MouseButton.LeftButton,
+        Qt.KeyboardModifier.NoModifier,
+    )
+    at = rects[1].center()
+    # Так шлёт события настоящая мышь: нажатие, отпускание, двойной щелчок, отпускание.
+    QTest.mousePress(viewport, left, none, at)
+    QTest.mouseRelease(viewport, left, none, at)
+    QTest.mouseDClick(viewport, left, none, at)
+    QTest.mouseRelease(viewport, left, none, at)
+    qapp.processEvents()
+    assert opened == []
+    assert len(ui_app.queue.queue.entries) == 2

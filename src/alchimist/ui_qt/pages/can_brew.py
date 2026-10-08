@@ -48,12 +48,17 @@ from alchimist.ui_qt.widgets.common import (
     page_heading,
 )
 from alchimist.ui_qt.widgets.element_badge import rarity_icon
+from alchimist.ui_qt.widgets.row_buttons import RowButtonsDelegate
 
 #: Значение «не фильтровать» в выпадающих списках, как в «Справочнике».
 ANY = "__any__"
 
 ROLE_OPTION = Qt.ItemDataRole.UserRole + 1
 ROLE_QUEUE = Qt.ItemDataRole.UserRole + 2
+#: Строка варианта: у неё в последней колонке кнопки «Сварить» и «В очередь».
+ROLE_ACTIONS = Qt.ItemDataRole.UserRole + 3
+#: Номера кнопок в строке варианта.
+BUTTON_BREW, BUTTON_QUEUE = 0, 1
 
 
 class CanBrewPage(Page):
@@ -141,7 +146,16 @@ class CanBrewPage(Page):
         # Иначе последняя колонка тянется, а растягиваться должна колонка с реагентами.
         self.tree.header().setStretchLastSection(False)
         self.tree.setColumnWidth(0, 260)
-        self._actions_width_cache: int | None = None
+        # Кнопки рисуются делегатом, а не создаются виджетами в каждой строке:
+        # на сотнях вариантов это в разы быстрее и выглядит так же.
+        self.row_buttons = RowButtonsDelegate(
+            self.tree,
+            [_("Сварить"), _("В очередь")],
+            ["", _("Отложить эти реагенты под будущую варку")],
+            role=ROLE_ACTIONS,
+        )
+        self.tree.setItemDelegateForColumn(5, self.row_buttons)
+        self.row_buttons.clicked.connect(self._row_button)
         self.tree.setAlternatingRowColors(True)
         self.tree.setIconSize(QSize(10, 10))
         self.tree.setRootIsDecorated(True)
@@ -269,13 +283,8 @@ class CanBrewPage(Page):
         rows.sort(key=self._sort_key)
 
         self.tree.clear()
-        self.tree.setColumnWidth(5, self._actions_width())
+        self.tree.setColumnWidth(5, self.row_buttons.preferred_width())
         self.empty.setVisible(not rows)
-        # Заполняется скрытым: у видимого дерева каждая вставленная строка заново
-        # раскладывает все уже стоящие в нём кнопки, и 200 вариантов рисовались
-        # полторы секунды вместо десятой. Скрытие снимает фокус — вернём его.
-        had_focus = self.tree.hasFocus()
-        self.tree.setVisible(False)
         for row in rows:
             easiest = row.easiest
             parent = QTreeWidgetItem(
@@ -315,6 +324,7 @@ class CanBrewPage(Page):
                     ]
                 )
                 child.setData(0, ROLE_OPTION, option)
+                child.setData(0, ROLE_ACTIONS, True)
                 child.setToolTip(3, difficulty_tooltip(option.difficulty))
                 if not option.combination.is_exact:
                     child.setForeground(3, warning_color())
@@ -325,47 +335,28 @@ class CanBrewPage(Page):
                     ),
                 )
                 parent.addChild(child)
-                self.tree.setItemWidget(child, 5, self._build_actions(option))
             parent.setExpanded(True)
         self.tree.setVisible(bool(rows))
-        if had_focus and rows:
-            self.tree.setFocus()
 
     # ── кнопки строки ─────────────────────────────────────────────────────
-    def _build_actions(self, option: BrewOption | None) -> QWidget:
-        """Пара кнопок у варианта. `option=None` — образец для замера ширины."""
-        actions = QWidget()
-        layout = QHBoxLayout(actions)
-        layout.setContentsMargins(0, 0, 0, 0)
-        layout.setSpacing(4)
+    def _row_button(self, index, number: int) -> None:
+        """Щелчок по нарисованной кнопке варианта."""
+        item = self.tree.itemFromIndex(index)
+        option = item.data(0, ROLE_OPTION) if item is not None else None
+        if option is None:
+            return
+        if number == BUTTON_BREW:
+            self._brew(option)
+        elif number == BUTTON_QUEUE:
+            self._enqueue(option)
 
-        brew_button = QPushButton(_("Сварить"))
-        queue_button = QPushButton(_("В очередь"))
-        queue_button.setToolTip(_("Отложить эти реагенты под будущую варку"))
-        if option is not None:
-            brew_button.clicked.connect(lambda _c=False, o=option: self._brew(o))
-            queue_button.clicked.connect(lambda _c=False, o=option: self._enqueue(o))
-        layout.addWidget(brew_button)
-        layout.addWidget(queue_button)
-        return actions
-
-    def _actions_width(self) -> int:
-        """Ширина колонки с кнопками — по их собственному размеру.
+    def _forget_actions_width(self) -> None:
+        """Тема и шрифт меняют размеры кнопок — колонку надо мерить заново.
 
         Прибитое число здесь не годится: при другом системном шрифте, масштабе
         экрана или переводе надписи текст на кнопке просто обрезается.
         """
-        if self._actions_width_cache is None:
-            probe = self._build_actions(None)
-            probe.setParent(self)
-            probe.ensurePolished()
-            self._actions_width_cache = probe.sizeHint().width() + 10
-            probe.deleteLater()
-        return self._actions_width_cache
-
-    def _forget_actions_width(self) -> None:
-        """Тема меняет отступы кнопок, значит и ширину надо мерить заново."""
-        self._actions_width_cache = None
+        self.row_buttons.forget_sizes()
         self.invalidate()
 
     def _sort_key(self, row) -> tuple:
