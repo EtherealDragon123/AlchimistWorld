@@ -10,7 +10,7 @@
 | `alchimist.spec` | Описание сборки для PyInstaller, общее для всех ОС |
 | `build-windows-wine.sh` | Windows-сборка на Linux через Wine |
 | `PKGBUILD` | Пакет для Arch и производных: CachyOS, Manjaro, EndeavourOS |
-| `alchimist.desktop`, `icon.*` | Значок и пункт в меню приложений |
+| `alchimist.desktop`, `icon.*` | Значок и пункт в меню приложений. Всё нарисовано по `icon.svg`; `icon.icns` для macOS пересобирает `python tools/icns.py` |
 
 ## Своя система: Arch / CachyOS
 
@@ -70,6 +70,8 @@ python packaging/build.py --onefile
 - `AlchimistWorld-<версия>-<ос>` (`.exe` на Windows) — один файл, который просто отправить.
 
 Внутри уже лежат Python и Qt, поэтому у получателя ничего ставить не нужно.
+Версия берётся из `src/alchimist/__init__.py`: она же видна в свойствах `.exe`
+(вкладка «Подробно») и в «Об этой программе» у `.app` на macOS, там же значок-колба.
 Вариант «одним файлом» при каждом запуске распаковывается во временную папку —
 стартует на несколько секунд дольше, зато это ровно один файл.
 

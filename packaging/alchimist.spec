@@ -13,6 +13,18 @@ from pathlib import Path
 ROOT = Path(SPECPATH).parent
 SRC = ROOT / "src"
 
+
+def _version() -> str:
+    """Версия из src/alchimist/__init__.py — так же её читает build.py."""
+    text = (SRC / "alchimist" / "__init__.py").read_text(encoding="utf-8")
+    for line in text.splitlines():
+        if line.startswith("__version__"):
+            return line.split("=")[1].strip().strip('"')
+    raise SystemExit("В src/alchimist/__init__.py нет __version__")
+
+
+VERSION = _version()
+
 #: ALCHIMIST_ONEFILE=1 собирает всё в один файл: его удобно просто отправить,
 #: но при каждом запуске он распаковывается во временную папку и стартует дольше.
 ONEFILE = os.environ.get("ALCHIMIST_ONEFILE") == "1"
@@ -55,6 +67,48 @@ UNUSED_PLUGINS = (
     "platformthemes/libqgtk3",
     "platformthemes/qgtk3",
 )
+
+
+def _windows_version_info():
+    """Вкладка «Подробно» в свойствах .exe: версия, название и описание.
+
+    Без неё там пусто, а «Описание файла» Windows показывает, например, в
+    диспетчере задач. Числовая версия — четыре числа, «2.5.0» → 2.5.0.0.
+    """
+    from PyInstaller.utils.win32.versioninfo import (
+        FixedFileInfo,
+        StringFileInfo,
+        StringStruct,
+        StringTable,
+        VarFileInfo,
+        VarStruct,
+        VSVersionInfo,
+    )
+
+    digits = []
+    for part in VERSION.split(".")[:4]:
+        number = "".join(ch for ch in part if ch.isdigit()) or "0"
+        digits.append(int(number))
+    numbers = tuple(digits + [0] * (4 - len(digits)))
+    strings = {
+        "FileDescription": "AlchimistWorld",
+        "FileVersion": VERSION,
+        "InternalName": "AlchimistWorld",
+        "LegalCopyright": "MIT",
+        "OriginalFilename": "AlchimistWorld.exe",
+        "ProductName": "AlchimistWorld",
+        "ProductVersion": VERSION,
+    }
+    return VSVersionInfo(
+        ffi=FixedFileInfo(filevers=numbers, prodvers=numbers),
+        kids=[
+            # 0419 — русский, 04B0 — Юникод (кодовая страница 1200).
+            StringFileInfo(
+                [StringTable("041904B0", [StringStruct(k, v) for k, v in strings.items()])]
+            ),
+            VarFileInfo([VarStruct("Translation", [0x0419, 1200])]),
+        ],
+    )
 
 
 def _drop(entries, patterns):
@@ -116,6 +170,9 @@ _common = {
     "disable_windowed_traceback": False,
     "icon": str(_icon) if _icon.exists() else None,
 }
+if sys.platform == "win32":
+    # Только для Windows: на других ОС PyInstaller эту настройку игнорирует с предупреждением.
+    _common["version"] = _windows_version_info()
 
 if ONEFILE:
     exe = EXE(
@@ -143,9 +200,17 @@ else:
     )
 
     if sys.platform == "darwin":
+        # Иконку и версию .app берёт не из EXE: без них в Finder и «Об этой программе»
+        # видны значок PyInstaller и «0.0.0». Иконка собрана из icon.svg (tools/icns.py).
         app = BUNDLE(
             coll,
             name="AlchimistWorld.app",
+            icon=str(ROOT / "packaging" / "icon.icns"),
+            version=VERSION,
             bundle_identifier="world.alchimist.app",
-            info_plist={"NSHighResolutionCapable": True, "LSMinimumSystemVersion": "12.0"},
+            info_plist={
+                "NSHighResolutionCapable": True,
+                "LSMinimumSystemVersion": "12.0",
+                "CFBundleVersion": VERSION,
+            },
         )
