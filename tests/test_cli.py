@@ -70,6 +70,7 @@ def test_characters_and_learning(data_dir, capsys) -> None:
     out = capsys.readouterr().out
     assert "* Гримли" in out
     assert "рецептов 21/25" in out  # 20 обычных + изученное
+    assert "реагентов 55/63" in out  # обычные и эссенции (FR-14.2)
     assert "GM" in out
 
 
@@ -133,3 +134,21 @@ def test_journal_prints_distillation(data_dir, capsys, campaign_file) -> None:
     assert "разбор" in out
     assert "Сок Стального Дерева×1" in out
     assert "Тусклая эссенция земли×1" in out
+
+
+def test_learning_reagents(data_dir, capsys) -> None:
+    """FR-14.9 в консоли: неизученный реагент без элементов, изучить и забыть."""
+    assert run("new-character", "Гримли") == 0
+    capsys.readouterr()
+    assert run("catalog", "ingredients") == 0
+    line = next(x for x in capsys.readouterr().out.splitlines() if "Корень кавы" in x)
+    assert "не изучен" in line
+
+    assert run("learn", "--reagent", "Корень кавы") == 0
+    assert "Реагент изучен: Корень кавы — Вода×1, Магия×1" in capsys.readouterr().out
+    assert run("learn", "--reagent", "--forget", "Корень кавы") == 0
+    assert "Реагент забыт" in capsys.readouterr().out
+
+    assert run("inv", "add", "Корень кавы", "1") == 0  # попал в сумку — изучен
+    assert run("learn", "--reagent", "--forget", "Корень кавы") == 1
+    assert "лежит в сумке" in capsys.readouterr().err

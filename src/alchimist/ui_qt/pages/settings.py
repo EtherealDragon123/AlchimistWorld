@@ -195,15 +195,19 @@ class SettingsPage(Page):
             known = len(recipes)
         else:
             known = len(active.known_recipes & recipes)
+        known_reagents = sum(
+            1 for i in catalog.ingredients if self.app.catalog.knows_ingredient(i.id)
+        )
         self.catalog_stats.setText(
             _(
                 "В справочнике: {ingredients} реагентов, {potions} зелий, {recipes} рецептов. "
-                "Изучено: {known}."
+                "Изучено: {known} рецептов и {known_reagents} реагентов."
             ).format(
                 ingredients=len(catalog.ingredients),
                 potions=len(catalog.potions),
                 recipes=len(recipes),
                 known=known,
+                known_reagents=known_reagents,
             )
         )
         self._loading = False

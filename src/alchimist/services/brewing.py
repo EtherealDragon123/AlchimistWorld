@@ -209,7 +209,8 @@ class BrewingService:
                 self.catalog.potions(),
                 self.stock(),
                 self.kits,
-                self.catalog.ingredients(),
+                # Чем закрыть недостачу — только тем, что персонаж знает (FR-14.11).
+                self.catalog.known_ingredients_list(),
                 brewable_ids=[row.potion.id for row in self.can_brew()],
                 max_missing=max_missing,
             )

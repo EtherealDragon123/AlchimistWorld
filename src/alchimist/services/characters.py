@@ -1,8 +1,8 @@
 """Персонажи: несколько на одну установку, у каждого свой профиль (FR-14.x).
 
-Справочник общий, а наборы, инвентарь, журнал, очередь и изученные рецепты у
-каждого персонажа свои. GM — встроенный скрытый персонаж: появляется, когда при
-создании персонажа ввели его имя, знает все рецепты и один может менять справочник.
+Справочник общий, а наборы, инвентарь, журнал, очередь, изученные рецепты и
+реагенты у каждого персонажа свои. GM — встроенный скрытый персонаж: появляется,
+когда при создании персонажа ввели его имя, знает всё и один может менять справочник.
 """
 
 from __future__ import annotations
@@ -19,6 +19,7 @@ from alchimist.core.models import (
     Kit,
     Role,
     is_gm_name,
+    is_starter_ingredient,
     starter_recipes,
 )
 from alchimist.services.catalog import CatalogService
@@ -39,9 +40,28 @@ class CharacterService:
         self.reload()
 
     def reload(self) -> None:
-        self._characters = {c.id: c for c in self.store.load_all()}
+        self._characters = {}
+        for character in self.store.load_all():
+            if character.known_ingredients is None:
+                character = self._know_all_ingredients(character)
+            self._characters[character.id] = character
         if self._active_id not in self._characters:
             self._active_id = None
+
+    def _know_all_ingredients(self, character: Character) -> Character:
+        """Персонаж из версии до 2.5 знает все реагенты справочника (03 §6.11).
+
+        Тогда реагенты не изучали — их знали все, и отнимать уже открытое при
+        обновлении нечестно. Файл переписывается сразу, чтобы решение не зависело
+        от того, что окажется в справочнике в следующий раз.
+        """
+        known = frozenset() if character.is_gm else self._all_ingredient_ids()
+        character = character.with_(known_ingredients=known)
+        self.store.save(character)
+        return character
+
+    def _all_ingredient_ids(self) -> frozenset[str]:
+        return frozenset(i.id for i in self.catalog.catalog.ingredients)
 
     @property
     def notices(self) -> list[Message]:
@@ -81,6 +101,17 @@ class CharacterService:
         if active is None or active.is_gm:
             return None
         return active.known_recipes
+
+    def known_ingredient_ids(self) -> frozenset[str] | None:
+        """Изученные активным персонажем реагенты сверх стартовых. None — знает всё.
+
+        Стартовые (обычные и эссенции) сюда не входят: их знают все, проверка —
+        `Character.knows_ingredient` или `CatalogService.knows_ingredient`.
+        """
+        active = self.active
+        if active is None or active.is_gm or active.known_ingredients is None:
+            return None
+        return active.known_ingredients
 
     def can_edit_catalog(self) -> bool:
         """FR-14.6: справочник меняет только GM (или когда персонажей нет вовсе)."""
@@ -196,12 +227,53 @@ class CharacterService:
             return active
         return self._save(active.with_(known_recipes=active.known_recipes - {potion_id}))
 
+    # ── изучение реагентов (FR-14.9) ──────────────────────────────────────
+    def learn_ingredients(self, ingredient_ids: Iterable[str]) -> Character | None:
+        """Изучить реагенты пачкой — одна запись в файл. Стартовые не записываются.
+
+        Без персонажа (консоль на пустой папке, тесты сервисов) знать нечего: там
+        и так известно всё.
+        """
+        active = self.active
+        if active is None:
+            return None
+        new = set()
+        for ingredient_id in ingredient_ids:
+            ingredient = self.catalog.catalog.ingredient_by_id(ingredient_id)
+            if ingredient is None:
+                raise AlchimistError(ErrorCode.NOT_FOUND, id=ingredient_id)
+            if not active.knows_ingredient(ingredient):
+                new.add(ingredient_id)
+        if not new:
+            return active
+        return self._save(active.with_(known_ingredients=active.known_ingredients | new))
+
+    def learn_ingredient(self, ingredient_id: str) -> Character:
+        self._require_active()
+        return self.learn_ingredients([ingredient_id])  # type: ignore[return-value]
+
+    def forget_ingredient(self, ingredient_id: str) -> Character:
+        """Забыть изученный реагент. Стартовые и у GM не забываются.
+
+        Лежит ли реагент в сумке, проверяет `AppService`: инвентаря тут не видно.
+        """
+        active = self._require_active()
+        ingredient = self.catalog.catalog.ingredient_by_id(ingredient_id)
+        if ingredient is None:
+            raise AlchimistError(ErrorCode.NOT_FOUND, id=ingredient_id)
+        known = active.known_ingredients
+        if active.is_gm or is_starter_ingredient(ingredient) or not known:
+            return active
+        if ingredient_id not in known:
+            return active
+        return self._save(active.with_(known_ingredients=known - {ingredient_id}))
+
     # ── перенос со старых версий (03 §6.12) ───────────────────────────────
     def migrate_legacy(self, settings: Settings) -> list[Character]:
         """Профили, где играли до появления персонажей, становятся персонажами.
 
         Имя и наборы берутся из старого `settings.toml`. Знает такой персонаж все
-        рецепты справочника: раньше все записанные рецепты были известны всем, и
+        рецепты и реагенты справочника: раньше всё записанное было известно всем, и
         отнимать уже открытое при обновлении было бы нечестно.
         """
         migrated: list[Character] = []
@@ -218,6 +290,7 @@ class CharacterService:
                 Role.PLAYER,
                 settings.legacy_kits,
                 self.catalog.recipe_ids(),
+                known_ingredients=self._all_ingredient_ids(),
             )
             self.store.save(character)
             self._characters[character.id] = character

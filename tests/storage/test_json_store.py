@@ -353,3 +353,19 @@ def test_files_declare_their_real_schema_version(paths: Paths, catalog: Catalog)
     ):
         raw = json.loads(path.read_text(encoding="utf-8"))
         assert raw["schema_version"] == CURRENT_VERSIONS[kind], kind
+
+
+def test_character_keeps_learned_reagents() -> None:
+    """FR-14.9: изученные реагенты пишутся; без ключа (до 2.5) читаются как None."""
+    from alchimist.core.models import Character
+    from alchimist.storage.migrations import CURRENT_VERSIONS, migrate
+    from alchimist.storage.serde import character_from_dict, character_to_dict
+
+    ayn = Character("ayn", "Айн", known_ingredients={"koren-kavy"})
+    raw = character_to_dict(ayn)
+    assert raw["schema_version"] == CURRENT_VERSIONS["character"] == 2
+    assert raw["known_ingredients"] == ["koren-kavy"]
+    assert character_from_dict(raw, "ayn").known_ingredients == frozenset({"koren-kavy"})
+
+    old = {"schema_version": 1, "name": "Айн", "kits": ["alchemist"], "known_recipes": []}
+    assert character_from_dict(migrate("character", old), "ayn").known_ingredients is None

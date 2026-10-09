@@ -80,3 +80,30 @@ def test_recipe_drops_unknown_bases() -> None:
 
 def test_any_base_formatting() -> None:
     assert Recipe(ALL_BASES, EV.from_dict({"fire": 2})).format_bases_ru() == "Любая"
+
+
+# ── изучение реагентов (FR-14.2, FR-14.9) ────────────────────────────────────
+def test_starter_reagents_are_common_ones_and_essences() -> None:
+    from alchimist.core.models import (
+        Character,
+        Ingredient,
+        IngredientCategory,
+        Rarity,
+        Role,
+        is_starter_ingredient,
+    )
+
+    def item(rarity, category):
+        return Ingredient(id="x", name="X", rarity=rarity, category=category)
+
+    assert is_starter_ingredient(item(Rarity.COMMON, IngredientCategory.PLANT))
+    assert is_starter_ingredient(item(Rarity.LEGENDARY, IngredientCategory.ESSENCE))
+    assert not is_starter_ingredient(item(Rarity.RARE, IngredientCategory.CREATURE))
+    assert not is_starter_ingredient(item(Rarity.RARE, IngredientCategory.BASE))
+
+    rare = item(Rarity.RARE, IngredientCategory.CREATURE)
+    assert not Character("a", "Айн").knows_ingredient(rare)
+    assert Character("a", "Айн", known_ingredients={"x"}).knows_ingredient(rare)
+    assert Character("gm", "GM", Role.GM).knows_ingredient(rare)
+    # None — персонаж из версии до 2.5, ещё не дополненный сервисом: знает всё.
+    assert Character("a", "Айн", known_ingredients=None).knows_ingredient(rare)

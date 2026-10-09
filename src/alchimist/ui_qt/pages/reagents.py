@@ -71,9 +71,16 @@ class AddReagentDialog(QDialog):
         row.addStretch(1)
         row.addWidget(self.create_button)
 
+        # Неизученный реагент виден без элементов, а попав в сумку — изучается (FR-14.10).
+        self.unknown_hint = hint_label(
+            _("«Не изучен» — что в нём, пока неизвестно. Попадёт в сумку — станет изученным.")
+        )
+        self.unknown_hint.setWordWrap(True)
+
         layout = QVBoxLayout(self)
         layout.addWidget(self.search)
         layout.addWidget(self.list, 1)
+        layout.addWidget(self.unknown_hint)
         layout.addLayout(row)
         layout.addWidget(buttons)
 
@@ -84,15 +91,19 @@ class AddReagentDialog(QDialog):
     def _filter(self, text: str) -> None:
         needle = text.strip().casefold()
         self.list.clear()
+        any_unknown = False
         for ingredient in self.app.catalog.ingredients():
             if needle and needle not in ingredient.name.casefold():
                 continue
+            known = self.app.catalog.knows_ingredient(ingredient.id)
+            any_unknown = any_unknown or not known
+            elements = ingredient.elements.format_ru() if known else _("не изучен")
             entry = QListWidgetItem(
-                f"{ingredient.name}   ·   {RARITY_NAMES_RU[ingredient.rarity]}   ·   "
-                f"{ingredient.elements.format_ru()}"
+                f"{ingredient.name}   ·   {RARITY_NAMES_RU[ingredient.rarity]}   ·   {elements}"
             )
             entry.setData(Qt.ItemDataRole.UserRole, ingredient.id)
             self.list.addItem(entry)
+        self.unknown_hint.setVisible(any_unknown)
         if self.list.count():
             self.list.setCurrentRow(0)
 

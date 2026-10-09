@@ -24,7 +24,7 @@ CURRENT_VERSIONS: dict[str, int] = {
     "queue": 2,
     "settings": 1,
     "catalog-export": 2,
-    "character": 1,
+    "character": 2,
 }
 
 Migration = Callable[[dict[str, Any]], dict[str, Any]]
@@ -100,6 +100,17 @@ def _queue_v1_to_v2(data: dict[str, Any]) -> dict[str, Any]:
     return data
 
 
+def _character_v1_to_v2(data: dict[str, Any]) -> dict[str, Any]:
+    """Реагенты теперь тоже изучаются (FR-14.9): у персонажа появился `known_ingredients`.
+
+    Ключ здесь не добавляется: список зависит от справочника, а его миграция не
+    видит. Без ключа сервис персонажей при загрузке впишет все реагенты справочника —
+    до 2.5 персонаж знал их все, и отнимать уже открытое при обновлении нечестно.
+    Версия поднята, чтобы 2.4 не переписала файл, молча потеряв изученное.
+    """
+    return data
+
+
 #: Цепочки миграций: MIGRATIONS["ingredients"][1] превращает v1 в v2.
 MIGRATIONS: dict[str, dict[int, Migration]] = {
     "ingredients": {1: _ingredients_v1_to_v2},
@@ -110,7 +121,7 @@ MIGRATIONS: dict[str, dict[int, Migration]] = {
     "settings": {},
     # Файл обмена устроен как справочник: реагенты в нём мигрируют так же.
     "catalog-export": {1: _ingredients_v1_to_v2},
-    "character": {},
+    "character": {1: _character_v1_to_v2},
 }
 
 

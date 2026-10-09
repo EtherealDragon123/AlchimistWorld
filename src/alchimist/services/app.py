@@ -54,13 +54,35 @@ class AppService:
     characters: CharacterService
 
     def __post_init__(self) -> None:
-        # Подбор смотрит глазами активного персонажа: его рецепты, его наборы.
+        # Подбор смотрит глазами активного персонажа: его рецепты, реагенты и наборы.
         self.catalog.known_recipes = self.characters.known_recipe_ids
+        self.catalog.known_ingredients = self.characters.known_ingredient_ids
         self.bus.subscribe(CharacterChanged, self._on_character)
+        self.bus.subscribe(InventoryChanged, self._learn_from_bag)
         self._on_character(CharacterChanged())
+        self._learn_from_bag()
 
     def _on_character(self, _event) -> None:
         self.brewing.set_kits(self.characters.kits)
+
+    def _learn_from_bag(self, event: InventoryChanged | None = None) -> None:
+        """FR-14.10: реагент, попавший в сумку, становится изученным.
+
+        Срабатывает на любое пополнение — «Добавить», +1, отмену варки, дистилляцию,
+        консоль. Событие без id (смена персонажа, F5, запуск) проверяет всю сумку:
+        так подхватывается и сумка, поправленная руками.
+        """
+        if self.characters.known_ingredient_ids() is None:
+            return
+        held = self.inventory.reagent_quantities()
+        ids = event.ingredient_ids if event is not None and event.ingredient_ids else held
+        present = [
+            i
+            for i in ids
+            if held.get(i, 0) > 0 and self.catalog.catalog.ingredient_by_id(i) is not None
+        ]
+        if present:
+            self.characters.learn_ingredients(present)
 
     # ── общие мелочи для интерфейса ───────────────────────────────────────
     @property
@@ -241,6 +263,19 @@ class AppService:
     def forget_recipe(self, potion_id: str) -> Character:
         return self.characters.forget(potion_id)
 
+    def learn_ingredient(self, ingredient_id: str) -> Character:
+        """FR-14.9: изучить реагент — узнать, какие в нём элементы."""
+        return self.characters.learn_ingredient(ingredient_id)
+
+    def forget_ingredient(self, ingredient_id: str) -> Character:
+        """Забыть реагент. Лежащий в сумке нельзя: он тут же снова изучился бы (FR-14.10)."""
+        if self.inventory.reagent_qty(ingredient_id) > 0:
+            ingredient = self.catalog.raw_ingredient(ingredient_id)
+            raise AlchimistError(
+                ErrorCode.INGREDIENT_IN_BAG, name=ingredient.name, id=ingredient.id
+            )
+        return self.characters.forget_ingredient(ingredient_id)
+
     def reload(self) -> None:
         self.catalog.reload()
         self.characters.reload()
@@ -249,6 +284,7 @@ class AppService:
         self.queue.reload()
         self.settings.reload()
         self.brewing.set_kits(self.characters.kits)
+        self._learn_from_bag()
 
 
 def build_app(root: Path | None = None, profile: str | None = None) -> AppService:

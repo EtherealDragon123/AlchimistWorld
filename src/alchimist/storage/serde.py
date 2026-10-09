@@ -332,6 +332,7 @@ def character_to_dict(character: Character) -> dict[str, Any]:
         "role": str(character.role.value),
         "kits": [str(k.value) for k in character.kits],
         "known_recipes": sorted(character.known_recipes),
+        "known_ingredients": sorted(character.known_ingredients or ()),
         "show_unknown": character.show_unknown,
     }
 
@@ -351,6 +352,12 @@ def character_from_dict(data: dict[str, Any], character_id: str, path: str = "")
             kits=tuple(kits),
             known_recipes=frozenset(str(i) for i in data.get("known_recipes", [])),
             show_unknown=bool(data.get("show_unknown", True)),
+            # Ключа нет у персонажа из версии до 2.5: реагенты ему впишет сервис.
+            known_ingredients=(
+                None
+                if data.get("known_ingredients") is None
+                else frozenset(str(i) for i in data["known_ingredients"])
+            ),
         )
     except (TypeError, ValueError) as exc:
         raise StorageError(ErrorCode.STORAGE_CORRUPT, path=path, reason=str(exc)) from exc

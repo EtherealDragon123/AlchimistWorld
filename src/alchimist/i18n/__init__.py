@@ -109,6 +109,7 @@ _TEMPLATES: dict[str, str] = {
     ErrorCode.LAST_CHARACTER: "Нельзя удалить единственного персонажа",
     ErrorCode.RECIPE_UNKNOWN: "Рецепт «{name}» пока не знает никто, изучать нечего",
     ErrorCode.NO_SPECIAL_BASE: "В сумке нет основы «{name}»",
+    ErrorCode.INGREDIENT_IN_BAG: "Реагент «{name}» лежит в сумке — забыть его нельзя",
 }
 
 

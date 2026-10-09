@@ -17,6 +17,7 @@ from alchimist.core.models import (
     IngredientCategory,
     Potion,
     Recipe,
+    is_starter_ingredient,
 )
 from alchimist.core.rules import (
     RecipeKey,
@@ -47,6 +48,10 @@ class CatalogService:
     #: их: у неизученного рецепт скрыт, и подбор его не видит (FR-14.3, FR-14.8).
     #: Сам справочник целиком — в `catalog`: им пользуются обмен и правка GM.
     known_recipes: Callable[[], frozenset[str] | None] | None = None
+    #: Какие реагенты активный персонаж изучил сверх стартовых; None — все.
+    #: `ingredients()`, `ingredient()` и `ingredient_map()` показывают неизученный
+    #: реагент без элементов: игрок не знает, что в нём (FR-14.11).
+    known_ingredients: Callable[[], frozenset[str] | None] | None = None
     _catalog: Catalog = field(default_factory=Catalog)
     _index: dict[RecipeKey, set[str]] = field(default_factory=dict)
     _notices: list[Message] = field(default_factory=list)
@@ -80,7 +85,10 @@ class CatalogService:
         items = self._catalog.ingredients
         if not include_hidden:
             items = [i for i in items if not i.hidden]
-        return sorted(items, key=lambda i: i.name.casefold())
+        known = self._known_ingredients()
+        return sorted(
+            (self._ingredient_view(i, known) for i in items), key=lambda i: i.name.casefold()
+        )
 
     def potions(self, *, include_hidden: bool = False) -> list[Potion]:
         items = self._catalog.potions
@@ -92,13 +100,18 @@ class CatalogService:
         )
 
     def ingredient_map(self) -> dict[str, Ingredient]:
-        return {i.id: i for i in self._catalog.ingredients}
+        known = self._known_ingredients()
+        return {i.id: self._ingredient_view(i, known) for i in self._catalog.ingredients}
 
     def potion_map(self) -> dict[str, Potion]:
         known = self._known()
         return {p.id: self._view(p, known) for p in self._catalog.potions}
 
     def ingredient(self, ingredient_id: str) -> Ingredient:
+        return self._ingredient_view(self.raw_ingredient(ingredient_id), self._known_ingredients())
+
+    def raw_ingredient(self, ingredient_id: str) -> Ingredient:
+        """Реагент как есть, с элементами, даже если персонаж его не изучил."""
         item = self._catalog.ingredient_by_id(ingredient_id)
         if item is None:
             raise AlchimistError(ErrorCode.NOT_FOUND, id=ingredient_id)
@@ -128,6 +141,30 @@ class CatalogService:
         if known is None or potion.recipe is None or potion.id in known:
             return potion
         return potion.copy(recipe=None, recipe_note=None)
+
+    # ── знание реагентов (FR-14.9) ────────────────────────────────────────
+    def _known_ingredients(self) -> frozenset[str] | None:
+        return self.known_ingredients() if self.known_ingredients is not None else None
+
+    @staticmethod
+    def _knows(ingredient: Ingredient, known: frozenset[str] | None) -> bool:
+        return known is None or is_starter_ingredient(ingredient) or ingredient.id in known
+
+    @classmethod
+    def _ingredient_view(cls, ingredient: Ingredient, known: frozenset[str] | None) -> Ingredient:
+        """Неизученный реагент выглядит как реагент без элементов: что в нём, игрок не знает."""
+        if cls._knows(ingredient, known):
+            return ingredient
+        return ingredient.copy(elements=ElementVector())
+
+    def knows_ingredient(self, ingredient_id: str) -> bool:
+        """Знает ли активный персонаж, что в этом реагенте."""
+        return self._knows(self.raw_ingredient(ingredient_id), self._known_ingredients())
+
+    def known_ingredients_list(self) -> list[Ingredient]:
+        """Реагенты, чьи элементы персонажу известны: из них «Почти готово» ищет недостачу."""
+        known = self._known_ingredients()
+        return [i for i in self.ingredients() if self._knows(i, known)]
 
     def has_recipe(self, potion_id: str) -> bool:
         """Есть ли рецепт в самом справочнике: только такой и можно изучить."""
@@ -261,7 +298,7 @@ class CatalogService:
 
     def delete_ingredient(self, ingredient_id: str, *, used: bool = False) -> None:
         """FR-1.5: то, что есть в инвентаре или журнале, не удаляется — только скрывается."""
-        item = self.ingredient(ingredient_id)
+        item = self.raw_ingredient(ingredient_id)
         if used:
             raise AlchimistError(ErrorCode.INGREDIENT_IN_USE, name=item.name, id=item.id)
         self._catalog.ingredients = [i for i in self._catalog.ingredients if i.id != ingredient_id]
@@ -269,7 +306,7 @@ class CatalogService:
         self.bus.publish(CatalogChanged(ingredient_ids=(ingredient_id,)))
 
     def set_ingredient_hidden(self, ingredient_id: str, hidden: bool) -> Ingredient:
-        item, _ = self.update_ingredient(self.ingredient(ingredient_id).copy(hidden=hidden))
+        item, _ = self.update_ingredient(self.raw_ingredient(ingredient_id).copy(hidden=hidden))
         return item
 
     # ── запись: зелья (FR-2.3, FR-2.4) ────────────────────────────────────

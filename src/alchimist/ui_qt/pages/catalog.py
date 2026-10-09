@@ -28,6 +28,7 @@ from alchimist.core.models import (
     IngredientCategory,
     PotionKind,
     Rarity,
+    is_starter_ingredient,
 )
 from alchimist.i18n import _, describe
 from alchimist.ui_qt.dialogs.ingredient_dialog import IngredientDialog
@@ -38,6 +39,11 @@ from alchimist.ui_qt.theme import muted_color, rarity_color, warning_color
 from alchimist.ui_qt.widgets.common import FilterBar, SearchBox, page_heading
 
 ANY = "__any__"
+
+
+def unknown_hint() -> str:
+    """Галочка «Показывать неизученные» одна на обе вкладки: это одна настройка персонажа."""
+    return _("Показывать реагенты и зелья, которые персонаж ещё не изучил")
 
 
 class IngredientsTab(QWidget):
@@ -102,6 +108,17 @@ class IngredientsTab(QWidget):
             button.clicked.connect(lambda _c=False, h=handler: h())
             buttons.addWidget(button)
             self.gm_buttons.append(button)
+        # Игрок реагенты не правит, а изучает и забывает (FR-14.9).
+        self.learn_button = QPushButton(_("Изучить реагент"))
+        self.learn_button.setToolTip(_("Узнали в игре, что в нём, — элементы станут видны"))
+        self.learn_button.clicked.connect(self.learn)
+        self.forget_button = QPushButton(_("Забыть реагент"))
+        self.forget_button.clicked.connect(self.forget)
+        self.unknown_check = QCheckBox(_("Показывать неизученные"))
+        self.unknown_check.setToolTip(unknown_hint())
+        self.unknown_check.toggled.connect(self._toggle_unknown)
+        for widget in (self.learn_button, self.forget_button, self.unknown_check):
+            buttons.addWidget(widget)
         buttons.addStretch(1)
 
         layout = QVBoxLayout(self)
@@ -134,16 +151,27 @@ class IngredientsTab(QWidget):
         element = self.filters.value("element")
         habitat = self.filters.value("habitat")
         gm = self.app.can_edit_catalog
+        active = self.app.characters.active
+        player = active is not None and not active.is_gm
         for button in self.gm_buttons:
             button.setVisible(gm)
+        for widget in (self.learn_button, self.forget_button, self.unknown_check):
+            widget.setVisible(player)
         # Скрытое GM убрал из игры: игроку его не показываем вовсе.
         self.hidden_check.setVisible(gm)
         show_hidden = gm and self.filters.value("hidden")
+        show_unknown = not player or active.show_unknown
+        self.unknown_check.blockSignals(True)
+        self.unknown_check.setChecked(show_unknown)
+        self.unknown_check.blockSignals(False)
         warnings = self.app.catalog.all_warnings() if gm else {}
 
         current = self._selected_id()
         self.tree.clear()
         for ingredient in self.app.catalog.ingredients(include_hidden=show_hidden):
+            known = self.app.catalog.knows_ingredient(ingredient.id)
+            if not show_unknown and not known:
+                continue
             if needle and needle not in ingredient.name.casefold():
                 continue
             if rarity != ANY and ingredient.rarity != rarity:
@@ -159,10 +187,12 @@ class IngredientsTab(QWidget):
                     ingredient.name + (" ⚠" if ingredient.id in warnings else ""),
                     RARITY_NAMES_RU[ingredient.rarity],
                     CATEGORY_NAMES_RU[ingredient.category],
-                    ingredient.elements.format_ru(),
+                    ingredient.elements.format_ru() if known else _("не изучен"),
                 ]
             )
             item.setForeground(1, rarity_color(ingredient.rarity))
+            if not known:
+                item.setForeground(3, muted_color())
             if ingredient.hidden:
                 item.setForeground(0, muted_color())
             if ingredient.id in warnings:
@@ -179,20 +209,51 @@ class IngredientsTab(QWidget):
         item = self.tree.currentItem()
         return item.data(0, Qt.ItemDataRole.UserRole) if item else None
 
+    def _update_actions(self) -> None:
+        """«Изучить» — у неизученного; «Забыть» — у изученного сверх стартовых и не из сумки."""
+        ingredient_id = self._selected_id()
+        if not ingredient_id:
+            self.learn_button.setEnabled(False)
+            self.forget_button.setEnabled(False)
+            return
+        ingredient = self.app.catalog.raw_ingredient(ingredient_id)
+        known = self.app.catalog.knows_ingredient(ingredient_id)
+        self.learn_button.setEnabled(not known)
+        can_forget = False
+        if not known:
+            reason = ""
+        elif is_starter_ingredient(ingredient):
+            reason = _("Обычные реагенты и эссенции знают все — забыть их нельзя")
+        elif self.app.inventory.reagent_qty(ingredient_id) > 0:
+            reason = _("Лежит в сумке — забыть его нельзя")
+        else:
+            reason = _("Забыть, что в нём: элементы снова станут скрыты")
+            can_forget = True
+        self.forget_button.setEnabled(can_forget)
+        self.forget_button.setToolTip(reason)
+
     def _show_card(self) -> None:
         ingredient_id = self._selected_id()
+        self._update_actions()
         if not ingredient_id:
             self.card.clear()
             return
         ingredient = self.app.catalog.ingredient(ingredient_id)
+        known = self.app.catalog.knows_ingredient(ingredient_id)
         warnings = (
             self.app.catalog.validate_ingredient(ingredient) if self.app.can_edit_catalog else []
         )
+        if known:
+            elements = ingredient.elements.format_ru()
+        else:
+            elements = f"<i>{_('не изучен')}</i> — " + _(
+                "станет изученным, как только попадёт в сумку, или кнопкой «Изучить реагент»"
+            )
         parts = [
             f"<h3>{ingredient.name}</h3>",
             f"<p><i>{RARITY_NAMES_RU[ingredient.rarity]} · "
             f"{CATEGORY_NAMES_RU[ingredient.category]}" + "</i></p>",
-            f"<p><b>{_('Элементы')}:</b> {ingredient.elements.format_ru()}</p>",
+            f"<p><b>{_('Элементы')}:</b> {elements}</p>",
         ]
         if ingredient.habitats:
             parts.append(f"<p><b>{_('Места')}:</b> {', '.join(ingredient.habitats)}</p>")
@@ -238,7 +299,7 @@ class IngredientsTab(QWidget):
         ingredient_id = self._selected_id()
         if not ingredient_id or not self.app.can_edit_catalog:
             return
-        dialog = IngredientDialog(self.app, self.app.catalog.ingredient(ingredient_id), self)
+        dialog = IngredientDialog(self.app, self.app.catalog.raw_ingredient(ingredient_id), self)
         if dialog.exec():
             self._save(dialog.build(), new=False)
 
@@ -263,6 +324,39 @@ class IngredientsTab(QWidget):
             return
         ingredient = self.app.catalog.ingredient(ingredient_id)
         self.app.set_ingredient_hidden(ingredient_id, not ingredient.hidden)
+
+    def learn(self) -> None:
+        ingredient_id = self._selected_id()
+        if not ingredient_id:
+            return
+        try:
+            self.app.learn_ingredient(ingredient_id)
+        except AlchimistError as exc:
+            QMessageBox.warning(self, _("Не получилось"), describe(exc.message))
+
+    def forget(self) -> None:
+        ingredient_id = self._selected_id()
+        if not ingredient_id:
+            return
+        ingredient = self.app.catalog.ingredient(ingredient_id)
+        answer = QMessageBox.question(
+            self,
+            _("Забыть реагент"),
+            _(
+                "Забыть, что в реагенте «{name}»? Он снова станет изученным, как только "
+                "попадёт в сумку, или кнопкой «Изучить реагент»."
+            ).format(name=ingredient.name),
+        )
+        if answer != QMessageBox.StandardButton.Yes:
+            return
+        try:
+            self.app.forget_ingredient(ingredient_id)
+        except AlchimistError as exc:
+            QMessageBox.warning(self, _("Не получилось"), describe(exc.message))
+
+    def _toggle_unknown(self, show: bool) -> None:
+        if self.app.characters.active is not None:
+            self.app.characters.set_show_unknown(show)
 
     def delete(self) -> None:
         ingredient_id = self._selected_id()
@@ -362,7 +456,7 @@ class PotionsTab(QWidget):
         self.forget_button = QPushButton(_("Забыть рецепт"))
         self.forget_button.clicked.connect(self.forget)
         self.unknown_check = QCheckBox(_("Показывать неизученные"))
-        self.unknown_check.setToolTip(_("Показывать зелья, чей рецепт персонаж ещё не изучил"))
+        self.unknown_check.setToolTip(unknown_hint())
         self.unknown_check.toggled.connect(self._toggle_unknown)
         for widget in (self.learn_button, self.forget_button, self.unknown_check):
             buttons.addWidget(widget)

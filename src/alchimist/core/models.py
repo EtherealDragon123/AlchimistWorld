@@ -538,11 +538,16 @@ def is_gm_name(name: str) -> bool:
 
 @dataclass(frozen=True, slots=True)
 class Character:
-    """Персонаж: свои наборы, инвентарь, журнал и изученные рецепты.
+    """Персонаж: свои наборы, инвентарь, журнал, изученные рецепты и реагенты.
 
     `id` — имя папки профиля, при переименовании не меняется. GM знает все рецепты
-    и единственный может менять справочник; у игрока работают только рецепты из
-    `known_recipes`, остальные он изучает сам, кнопкой.
+    и реагенты и единственный может менять справочник; у игрока работают только
+    рецепты из `known_recipes`, остальные он изучает сам, кнопкой.
+
+    Реагенты обычной редкости и эссенции игрок знает всегда (`is_starter_ingredient`),
+    остальные — из `known_ingredients`: изучил кнопкой или получил в сумку (FR-14.9).
+    `None` там бывает только у персонажа из версии до 2.5, пока сервис при загрузке
+    не впишет ему все реагенты справочника.
     """
 
     id: str
@@ -550,14 +555,17 @@ class Character:
     role: Role = Role.PLAYER
     kits: tuple[Kit, ...] = (Kit.ALCHEMIST,)
     known_recipes: frozenset[str] = frozenset()
-    #: Показывать ли в справочнике зелья, чей рецепт персонаж ещё не изучил.
+    #: Показывать ли в справочнике неизученные зелья и реагенты.
     show_unknown: bool = True
+    known_ingredients: frozenset[str] | None = frozenset()
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "role", coerce_enum(Role, self.role, Role.PLAYER))
         kits = tuple(k for k in (coerce_enum(Kit, k) for k in self.kits) if k is not None)
         object.__setattr__(self, "kits", kits or (Kit.ALCHEMIST,))
         object.__setattr__(self, "known_recipes", frozenset(self.known_recipes))
+        if self.known_ingredients is not None:
+            object.__setattr__(self, "known_ingredients", frozenset(self.known_ingredients))
 
     @property
     def is_gm(self) -> bool:
@@ -566,6 +574,15 @@ class Character:
     def knows(self, potion_id: str) -> bool:
         return self.is_gm or potion_id in self.known_recipes
 
+    def knows_ingredient(self, ingredient: Ingredient) -> bool:
+        """FR-14.9: стартовые реагенты известны всем, остальные — изученные."""
+        return (
+            self.is_gm
+            or is_starter_ingredient(ingredient)
+            or self.known_ingredients is None
+            or ingredient.id in self.known_ingredients
+        )
+
     def with_(self, **changes: object) -> Character:
         return replace(self, **changes)  # type: ignore[arg-type]
 
@@ -573,3 +590,12 @@ class Character:
 def starter_recipes(potions: Iterable[Potion]) -> frozenset[str]:
     """Что новый персонаж знает с самого начала: рецепты всех обычных зелий."""
     return frozenset(p.id for p in potions if p.rarity is Rarity.COMMON and p.recipe is not None)
+
+
+def is_starter_ingredient(ingredient: Ingredient) -> bool:
+    """Реагент, который знают все и забыть нельзя (FR-14.2).
+
+    Это реагенты обычной редкости и эссенции: у эссенции элемент и сила видны
+    из самого названия, а дистилляция и так их делает.
+    """
+    return ingredient.rarity is Rarity.COMMON or ingredient.category is IngredientCategory.ESSENCE

@@ -40,9 +40,11 @@ def cmd_catalog(args: argparse.Namespace) -> int:
     if args.what == "ingredients":
         for item in app.catalog.ingredients():
             habitats = f" ({', '.join(item.habitats)})" if item.habitats else ""
+            known = app.catalog.knows_ingredient(item.id)
+            elements = item.elements.format_ru() if known else "не изучен"
             print(
                 f"{item.name:38} {RARITY_NAMES_RU[item.rarity]:12} "
-                f"{CATEGORY_NAMES_RU[item.category]:10} {item.elements.format_ru():30}"
+                f"{CATEGORY_NAMES_RU[item.category]:10} {elements:30}"
                 f"{habitats}"
             )
     else:
@@ -246,13 +248,18 @@ def cmd_characters(args: argparse.Namespace) -> int:
         print("Персонажей пока нет: alchimist new-character ИМЯ")
         return 0
     total = len(app.catalog.recipe_ids())
+    ingredients = app.catalog.catalog.ingredients
     for character in characters:
         mark = "*" if active and character.id == active.id else " "
         known = (
             total if character.is_gm else len(character.known_recipes & app.catalog.recipe_ids())
         )
+        reagents = sum(1 for i in ingredients if character.knows_ingredient(i))
         kits = ", ".join(KIT_NAMES_RU[k] for k in character.kits)
-        print(f"{mark} {character.name:24} {character.id:16} рецептов {known}/{total}   {kits}")
+        print(
+            f"{mark} {character.name:24} {character.id:16} рецептов {known}/{total}   "
+            f"реагентов {reagents}/{len(ingredients)}   {kits}"
+        )
     return 0
 
 
@@ -278,8 +285,18 @@ def cmd_switch(args: argparse.Namespace) -> int:
 
 
 def cmd_learn(args: argparse.Namespace) -> int:
-    """FR-14.3: изучить или забыть рецепт зелья."""
+    """FR-14.3, FR-14.9: изучить или забыть рецепт зелья, а с `--reagent` — реагент."""
     app = _app(args)
+    if args.reagent:
+        ingredient = _find_ingredient(app, args.name)
+        if args.forget:
+            app.forget_ingredient(ingredient.id)
+            print(f"Реагент забыт: {ingredient.name}")
+        else:
+            app.learn_ingredient(ingredient.id)
+            elements = app.catalog.ingredient(ingredient.id).elements.format_ru()
+            print(f"Реагент изучен: {ingredient.name} — {elements}")
+        return 0
     potion = _find_potion(app, args.name)
     if args.forget:
         app.forget_recipe(potion.id)
@@ -378,8 +395,9 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("name", help="имя или id персонажа")
     p.set_defaults(func=cmd_switch)
 
-    p = sub.add_parser("learn", help="изучить рецепт зелья (FR-14.3)")
-    p.add_argument("name", help="название зелья")
+    p = sub.add_parser("learn", help="изучить рецепт зелья или реагент (FR-14.3, FR-14.9)")
+    p.add_argument("name", help="название зелья, а с --reagent — реагента")
+    p.add_argument("--reagent", action="store_true", help="изучить реагент, а не рецепт")
     p.add_argument("--forget", action="store_true", help="наоборот, забыть")
     p.set_defaults(func=cmd_learn)
 

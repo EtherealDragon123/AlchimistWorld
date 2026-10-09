@@ -211,3 +211,68 @@ def test_failed_brew_reveals_nothing(campaign, qapp, monkeypatch) -> None:
     dialog.failure.setChecked(True)
     dialog._confirm()
     assert not campaign.characters.active.knows(SALAMANDER)
+
+
+# ── изучение реагентов (FR-14.9–14.11) ───────────────────────────────────────
+KAVA = "koren-kavy"  # необычное растение: новичок его не знает
+NUT = "shchelkorekh"  # обычное: его знают все
+
+
+def test_player_learns_a_reagent_in_the_catalog(campaign, campaign_window, monkeypatch) -> None:
+    tab = page_of(campaign_window, CatalogPage).ingredients
+    assert tab.learn_button.isVisibleTo(tab) and tab.forget_button.isVisibleTo(tab)
+    assert _recipe_cell(tab, KAVA) == "не изучен"
+    _select(tab, KAVA)
+    assert "не изучен" in tab.card.toPlainText()
+    assert tab.learn_button.isEnabled() and not tab.forget_button.isEnabled()
+
+    tab.learn()
+    tab = page_of(campaign_window, CatalogPage).ingredients
+    assert _recipe_cell(tab, KAVA) == "Вода×1, Магия×1"
+    _select(tab, KAVA)
+    assert not tab.learn_button.isEnabled() and tab.forget_button.isEnabled()
+
+    monkeypatch.setattr(QMessageBox, "question", lambda *_a, **_k: QMessageBox.StandardButton.Yes)
+    tab.forget()
+    assert not campaign.catalog.knows_ingredient(KAVA)
+
+
+def test_reagent_in_the_bag_or_common_cannot_be_forgotten(campaign, campaign_window) -> None:
+    campaign.inventory.set_reagent(KAVA, 1)  # попал в сумку — изучен
+    tab = page_of(campaign_window, CatalogPage).ingredients
+    _select(tab, KAVA)
+    assert not tab.forget_button.isEnabled()
+    assert "в сумке" in tab.forget_button.toolTip()
+
+    _select(tab, NUT)
+    assert not tab.learn_button.isEnabled() and not tab.forget_button.isEnabled()
+    assert "знают все" in tab.forget_button.toolTip()
+
+
+def test_hiding_unlearned_hides_reagents_too(campaign, campaign_window) -> None:
+    tab = page_of(campaign_window, CatalogPage).ingredients
+    assert tab.tree.topLevelItemCount() == 63
+    tab.unknown_check.setChecked(False)
+    page = page_of(campaign_window, CatalogPage)
+    assert page.ingredients.tree.topLevelItemCount() == 55
+    assert not page.potions.unknown_check.isChecked()  # одна настройка на обе вкладки
+
+
+def test_add_dialog_shows_unlearned_without_elements(campaign, qapp) -> None:
+    from alchimist.ui_qt.pages.reagents import AddReagentDialog
+
+    dialog = AddReagentDialog(campaign)
+    rows = [dialog.list.item(i).text() for i in range(dialog.list.count())]
+    assert any("Корень кавы" in r and "не изучен" in r for r in rows)
+    assert any("Щёлкорех" in r and "Огонь×1" in r for r in rows)
+    assert dialog.unknown_hint.isVisibleTo(dialog)
+    dialog.search.setText("Щёлкорех")
+    assert not dialog.unknown_hint.isVisibleTo(dialog)  # среди найденного неизученных нет
+    dialog.close()
+
+
+def test_gm_sees_reagents_whole(campaign, campaign_window) -> None:
+    campaign.create_character("GM")
+    tab = page_of(campaign_window, CatalogPage).ingredients
+    assert not tab.learn_button.isVisibleTo(tab)
+    assert _recipe_cell(tab, KAVA) == "Вода×1, Магия×1"

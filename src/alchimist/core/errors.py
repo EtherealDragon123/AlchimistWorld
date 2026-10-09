@@ -83,6 +83,8 @@ class ErrorCode(StrEnum):
     RECIPE_UNKNOWN = "recipe_unknown"
     #: Варка на особой основе, а её нет в сумке (П-4.4).
     NO_SPECIAL_BASE = "no_special_base"
+    #: Реагент лежит в сумке — забыть его нельзя, он тут же снова изучится (FR-14.10).
+    INGREDIENT_IN_BAG = "ingredient_in_bag"
 
 
 @dataclass(frozen=True, slots=True)
