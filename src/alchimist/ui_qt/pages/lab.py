@@ -58,6 +58,7 @@ class LabPage(Page):
 
     title = "Лаборатория"
     icon = "🧪"
+    scrollable = True
 
     def __init__(self, app, bridge, parent: QWidget | None = None) -> None:
         super().__init__(app, bridge, parent)

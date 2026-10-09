@@ -157,3 +157,36 @@ def test_indicator_cache_follows_the_palette(qapp) -> None:
 
     repainted = indicator_paths(replace(DARK, accent="#00ff00"))
     assert repainted["check_on_plain"] != dark["check_on_plain"]
+
+
+# ── окно меньше своего минимума (баг-репорт: «у GM плющит выбор персонажа») ───
+def test_pages_scroll_instead_of_squashing(window, ui_app, qapp) -> None:
+    """Тайловый оконный менеджер или маленький экран дают окну меньше его минимума.
+
+    Без прокрутки Qt сжимал виджеты ниже нужного: у GM (лишняя строка «Это GM…»)
+    выбор персонажа в «Настройках» сплющивался до нескольких пикселей, а в
+    «Лаборатории» — поля суммы элементов.
+    """
+    from alchimist.ui_qt.pages.lab import LabPage
+    from alchimist.ui_qt.pages.settings import SettingsPage
+
+    ui_app.create_character("GM", seed_catalog=False)
+    # Минимум окна больше не держится за высокие страницы: они прокручиваются.
+    assert window.minimumSizeHint().height() < 500
+
+    window.setMinimumSize(1, 1)  # как в тайловом менеджере: минимум окна не соблюдается
+    window.resize(1180, 520)
+    qapp.processEvents()
+
+    window.go_to(SettingsPage)
+    qapp.processEvents()
+    settings = next(p for p in window.pages if isinstance(p, SettingsPage))
+    assert settings.role_label.isVisible()  # та самая строка у GM
+    combo = settings.character_combo
+    assert combo.height() >= combo.sizeHint().height()
+
+    window.go_to(LabPage)
+    qapp.processEvents()
+    lab = next(p for p in window.pages if isinstance(p, LabPage))
+    for box in lab.elements._boxes.values():
+        assert box.height() >= box.minimumSizeHint().height()

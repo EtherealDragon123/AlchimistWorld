@@ -35,6 +35,7 @@ from alchimist.ui_qt.widgets.common import hint_label, page_heading
 class SettingsPage(Page):
     title = "Настройки"
     icon = "⚙"
+    scrollable = True
 
     def __init__(self, app, bridge, parent: QWidget | None = None) -> None:
         super().__init__(app, bridge, parent)
